@@ -1,0 +1,26 @@
+{
+  "name": "thymio3-draw",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Choose and watch what the Thymio 3 draws: the firmware's drawing mode (polygons and shapes) as a picture-book interface",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/geometry.test.js tests/protocol.test.js tests/store.test.js tests/i18n.test.js tests/drawer.test.js tests/figures.test.js tests/ink.test.js tests/share.test.js tests/qr.test.js tests/names.test.js && node tests/link.test.js && python3 -I tests/test_drawer_mode.py",
+    "golden": "python3 -I tests/test_drawer_mode.py --golden tests/golden-drawer.json",
+    "api:update": "npm update thymio3-ts-api"
+  },
+  "dependencies": {
+    "jsqr": "^1.4.0",
+    "qrcode-generator": "^2.0.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "thymio3-ts-api": "github:Mobsya/thymio3-ts-api#main"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.0",
+    "vite": "^8.2.2"
+  }
+}
