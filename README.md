@@ -208,7 +208,7 @@ npm run golden       # réécrit tests/golden-drawer.json si le mode Python chan
 npm run build
 ```
 
-Pas de dépôt git ni de workflow GitHub Pages ici (les autres projets ont `.github/workflows/deploy.yml`: à copier le jour où l'on publie).
+**Démo en ligne**: https://francescomondada.github.io/thymio3-draw/ (GitHub Pages). Le workflow `.github/workflows/deploy.yml` (le même que dans thymio3-learn et thymio3-cards) construit la page à chaque envoi sur `main` et la publie. Le dépôt est https://github.com/FrancescoMondada/thymio3-draw. C'est cette adresse que les codes QR « Lien vers l'application » contiennent (`APP_URL` dans `src/share.js`).
 
 ## Statut — à lire
 
