@@ -140,8 +140,7 @@ milieu de la feuille et le robot à son départ; la figure et la taille sont dit
 plein écran (sans pseudo ni date), pour que les élèves le scannent avec la caméra de leur tablette. Le code générique est l'adresse seule (`APP_LINKS.web`): il ouvre le navigateur de l'appareil (Chrome ou Samsung Internet sur
 Android, qui parlent à un robot). Le code iOS est `bluefy://open?url=<adresse>` (`APP_LINKS.ios`): il ouvre Bluefy, le navigateur de l'iPhone et de l'iPad qui sait parler à un robot, à installer d'abord. Pas de code « Chrome sur
 Android »: un lien `intent://` n'est pas ouvert par la caméra d'un Samsung (un test l'interdit). Les codes tiennent toujours l'adresse de GitHub Pages `APP_URL` (`src/share.js`), jamais `location`, pour qu'un enseignant sur `localhost`
-donne un lien que les tablettes peuvent atteindre. **Cette adresse (le dépôt `thymio3-draw` du même compte que les autres pages) a été confirmée comme la bonne; le dépôt et le site n'existent pas encore (pas de dépôt ni de workflow ici): les codes ne
-mèneront nulle part tant que l'app n'est pas publiée à cette adresse.** Le format `bluefy://open?url=` n'est pas confirmé par la documentation de Bluefy: à essayer sur un iPad.
+donne un lien que les tablettes peuvent atteindre. **Cette adresse est celle du dépôt public `FrancescoMondada/thymio3-draw` et de sa démo en ligne (GitHub Pages), publiée le 2026-11-01: les codes mènent à la page.** Le format `bluefy://open?url=` n'est pas confirmé par la documentation de Bluefy: à essayer sur un iPad.
 
 **Pseudo sous le code**, comme dans les autres pages: chaque appareil tire au départ un pseudo au hasard (`src/names.js`: un mot de science ou de vitesse, un animal, deux chiffres: « StealthRaven80 »), qu'on peut remplacer à la
 main ou retirer au dé (Paramètres → « Pseudo sur le code QR »). Écrit en grand sous le code avec la date et l'heure, il sert à reconnaître sur une photo l'appareil dont elle vient. Le réglage **« Afficher le pseudo »**
