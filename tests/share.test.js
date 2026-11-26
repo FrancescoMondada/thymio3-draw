@@ -148,3 +148,11 @@ test('the biggest configuration, program included, fits the limit', () => {
   assert.ok(widest.length < MAX_TEXT, `${widest.length} characters`);
   assert.equal(decodeConfig(widest).program.length, 40);
 });
+
+test('the setting "show the path of a program in advance" travels in the code', () => {
+  assert.equal(encodeConfig({ lang: 'fr', showName: false, showPath: false, figure: 16 }), 'T3D1;l=fr;p=0;v=0;f=16');
+  assert.deepEqual(decodeConfig('T3D1;v=1;f=3'), { showPath: true, figure: 3 });
+  assert.deepEqual(decodeConfig('T3D1;v=0'), { showPath: false });
+  for (const bad of ['v=2', 'v=', 'v=yes', 'v=-1']) assert.equal(decodeConfig(`T3D1;${bad}`), null, bad);
+  assert.deepEqual(applyConfig(new Telemetry(3), decodeConfig('T3D1;v=1')), {}, 'nothing to tell the robot, but the code is one of ours');
+});

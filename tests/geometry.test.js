@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FIGURES, FIGURE_COUNT, figureAt, groupOf, placeInGroup, idOf, stepSelection, otherGroupFirst, sideLengthMm, mmPerUnit, MM_PER_UNIT, SIDE_MS, pivotSpeeds, MOVE_SPEED, robotModel, TAU300_S } from '../src/spec.js';
 import {
-  figurePath, closure, totalTurn, bounds, startPoseFor, recipeGroups, durationSec, Odometer, dirOf, wrap180, customSteps, customFigure, customLength, customMessage, figureOf,
+  figurePath, closure, totalTurn, bounds, startPoseFor, Odometer, dirOf, wrap180, customSteps, customFigure, customLength, customMessage, figureOf,
   localToWorld, worldToLocal, unitsFor,
 } from '../src/geometry.js';
 
@@ -113,21 +113,6 @@ test('startPoseFor puts the middle of the figure on the page centre, whatever th
   }
 });
 
-test('the recipe: a regular figure is one step repeated, the others list their steps', () => {
-  assert.deepEqual(recipeGroups(FIGURES[3]), [{ steps: [0], repeat: 4 }]);
-  assert.deepEqual(recipeGroups(FIGURES[12]), [{ steps: [0], repeat: 5 }]);
-  assert.equal(recipeGroups(FIGURES[9]).length, 4);
-  assert.deepEqual(recipeGroups(FIGURES[8]), [{ steps: [0], repeat: 1 }]);
-  assert.deepEqual(recipeGroups(FIGURES[0]), [{ steps: [0], repeat: 1 }]);
-});
-
-test('the time a figure takes is of the right order: a square about 15 s, a circle about 15 s, the 8 about 30 s', () => {
-  const sq = durationSec(FIGURES[3]);
-  assert.ok(sq > 10 && sq < 30, `square ${sq}`);
-  near(durationSec(FIGURES[8]), 15.4, 0.5);
-  near(durationSec(FIGURES[15]), 30.6, 1);
-});
-
 test('dead reckoning follows a straight line, a circle and a turn on the spot', () => {
   const k = MM_PER_UNIT;
   const o = new Odometer(k);
@@ -194,8 +179,6 @@ test('the size scales the sides, and the circles through the wheel that the firm
   assert.deepEqual(pivotSpeeds([140, 0], 50), [140, -46]);
   assert.deepEqual(pivotSpeeds([0, 140], 200), [46, 140]);
   assert.deepEqual(pivotSpeeds([140, 0], 100), [140, 0]);
-  assert.ok(durationSec(FIGURES[3], { size: 200 }) > durationSec(FIGURES[3]));
-  assert.ok(durationSec(FIGURES[3], { size: 50 }) < durationSec(FIGURES[3]));
 });
 
 test('a form of the page\'s own: the sides and turns the robot is told', () => {
@@ -279,7 +262,6 @@ test('a form drawn several times: each time from where the last one stopped, in 
   assert.equal(customFigure(sq, 1, 90).steps.at(-1).turn, 90, 'the angle is the turn after the last side');
   assert.equal(totalTurn(customFigure(sq, 3)), 3 * 270);
   assert.equal(totalTurn(customFigure(sq, 3, 90)), 3 * 360);
-  assert.ok(durationSec(customFigure(sq, 3)) > 2.9 * durationSec(customFigure(sq, 1)));
   assert.equal(figureOf(16, sq, 4, 30).repeat, 4);
   assert.equal(figureOf(16, sq, 4, 30).endAngle, 30);
 });

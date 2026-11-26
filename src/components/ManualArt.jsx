@@ -55,21 +55,58 @@ const Word = ({ x, y, size = 12.5, color = INK, anchor = 'middle', weight = 800,
   <text x={x} y={y} textAnchor={anchor} fontSize={size} fontWeight={weight} fill={color}>{children}</text>
 );
 
-// ---- 1. choose the mode: in the menu, the arrows until blue and yellow, then the middle button --------------------------------------------
+// The modes of the robot as its menu shows them, in the order the arrows go through them (main/mode.c): the colours of the body lights,
+// front left, front right, back right, back left. The Painter mode is the one with blue in front and yellow behind.
+const MAGENTA = '#e040fb', CYAN = '#18c8d6', ORANGE = '#ff9f1c', DARK_BLUE = '#1b2f9e';
+const MODES = [
+  [MAGENTA, MAGENTA, CYAN, CYAN],                     // the sequence mode
+  [GREEN, GREEN, GREEN, GREEN],
+  [ORANGE, ORANGE, ORANGE, ORANGE],
+  [RED, RED, RED, RED],
+  [DARK_BLUE, DARK_BLUE, DARK_BLUE, DARK_BLUE],
+  [CYAN, CYAN, CYAN, CYAN],
+  [MAGENTA, MAGENTA, MAGENTA, MAGENTA],
+  [BLUE, BLUE, YELLOW, YELLOW],                       // the Painter mode
+  [BLUE, GREEN, YELLOW, RED],
+  ['#fff', '#fff', '#fff', '#fff'],
+];
+const PAINTER = 7;
+
+// All the modes in a row, the one of this manual framed
+function Modes({ y }) {
+  return (
+    <g>
+      {MODES.map((c, i) => (
+        <g key={i} transform={`translate(${6 + i * 31.4} ${y})`}>
+          {i === PAINTER && <rect x="-3.5" y="-4" width="32" height="34" rx="8" fill="#fde7f0" stroke={PINK} strokeWidth="2.6" />}
+          <path d="M2 12 Q2 2 12.5 2 Q23 2 23 12 V22 Q23 24 21 24 H4 Q2 24 2 22 Z" fill="#e4e9f1" stroke="#8896ae" strokeWidth="1.3" />
+          {[[7.5, 10], [17.5, 10], [17.5, 18.5], [7.5, 18.5]].map(([x, cy], k) => <circle key={k} cx={x} cy={cy} r="3.5" fill={c[k]} stroke="#6f6d78" strokeWidth=".6" />)}
+        </g>
+      ))}
+    </g>
+  );
+}
+
+const Lines = ({ x, y, a, b }) => (
+  <g><Word x={x} y={y} size={11.5}>{a}</Word><Word x={x} y={y + 13} size={11.5}>{b}</Word></g>
+);
+
+// ---- 1. choose the mode among the others: in the menu, the arrows until blue and yellow, then the middle button ----------------------------
 export function ModeArt({ labels }) {
   return (
     <svg viewBox="0 0 320 200" aria-hidden="true" focusable="false">
-      <Step x={18} y={18} n={1} />
-      <Robot x={82} y={96} s={1.05} menu press={['L', 'R']} />
+      <Step x={14} y={14} n={1} />
+      <Robot x={82} y={58} s={0.76} menu press={['L', 'R']} />
       {/* the arrows go through the modes */}
-      <Arrow from={[48, 66]} to={[24, 66]} />
-      <Arrow from={[116, 66]} to={[140, 66]} />
-      <circle cx="36" cy="177" r="6" fill={BLUE} /><Word x={46} y={181} anchor="start">{labels.blue}</Word>
-      <circle cx="36" cy="193" r="6" fill={YELLOW} /><Word x={46} y={197} anchor="start">{labels.yellow}</Word>
-      <Arrow from={[150, 100]} to={[180, 100]} color={MUTED} />
-      <Step x={196} y={18} n={2} />
-      <Robot x={248} y={96} s={1.05} menu press={['C']} />
-      <Word x={248} y={187}>{labels.centre}</Word>
+      <Arrow from={[56, 38]} to={[26, 38]} />
+      <Arrow from={[108, 38]} to={[138, 38]} />
+      <Lines x={82} y={114} a={labels.arrows1} b={labels.arrows2} />
+      <Arrow from={[148, 62]} to={[176, 62]} color={MUTED} />
+      <Step x={190} y={14} n={2} />
+      <Robot x={242} y={58} s={0.76} menu press={['C']} />
+      <Lines x={242} y={114} a={labels.centre1} b={labels.centre2} />
+      <Modes y={141} />
+      <Word x={160} y={188} size={11.5}>{labels.choose}</Word>
     </svg>
   );
 }
@@ -114,15 +151,18 @@ export function PickArt({ labels }) {
       {row(0, 12, labels.front)}
       {row(8, 78, labels.back)}
       {/* the keys */}
-      <Key x={20} y={166} turn={-90} /><Key x={50} y={166} turn={90} />
-      <Word x={35} y={196}>{labels.figure}</Word>
-      <Key x={100} y={152} turn={0} /><Key x={100} y={180} turn={180} />
-      <Word x={118} y={170} anchor="start">{labels.row}</Word>
-      {/* an example: four LEDs lit in front is the fourth figure of the first row */}
-      <rect x="178" y="146" width="140" height="50" rx="12" fill="#f6f5f1" />
-      <Leds x={188} y={171} lit={4} r={3.8} gap={9.6} />
-      <Word x={266} y={176} size={16}>=</Word>
-      <Figure fig={FIGURES[3]} x={279} y={155} size={32} />
+      <Key x={18} y={163} turn={-90} /><Key x={47} y={163} turn={90} />
+      <Word x={32} y={193} size={11.5}>{labels.figure}</Word>
+      <Key x={84} y={151} turn={0} /><Key x={84} y={181} turn={180} />
+      <Word x={101} y={170} anchor="start" size={11.5}>{labels.row}</Word>
+      {/* an example: the two rows of LEDs, four lit in front and none behind, is the fourth figure of the first row, the square */}
+      <rect x="146" y="138" width="172" height="60" rx="12" fill="#f6f5f1" />
+      <Word x={152} y={158} anchor="start" size={10.5} color={MUTED}>{labels.frontShort}</Word>
+      <Leds x={205} y={154} lit={4} r={3.5} gap={8.8} />
+      <Word x={152} y={186} anchor="start" size={10.5} color={MUTED}>{labels.backShort}</Word>
+      <Leds x={205} y={182} lit={0} r={3.5} gap={8.8} />
+      <Word x={277} y={174} size={16}>=</Word>
+      <Figure fig={FIGURES[3]} x={284} y={153} size={30} />
     </svg>
   );
 }
@@ -167,16 +207,18 @@ export function DrawArt({ labels }) {
   );
 }
 
-// ---- 4. stop: the middle button stops the robot and goes back to the menu ------------------------------------------------------------------
+// ---- 4. stop: the middle button stops the robot and goes back to the choice of the mode, among the others --------------------------------
 export function StopArt({ labels }) {
   return (
     <svg viewBox="0 0 320 200" aria-hidden="true" focusable="false">
-      <Robot x={78} y={96} s={1.05} press={['C']} />
-      <g transform="translate(132 36)"><circle r="19" fill={RED} /><rect x="-8" y="-8" width="16" height="16" rx="3" fill="#fff" /></g>
-      <Word x={78} y={187}>{labels.centre}</Word>
-      <Arrow from={[150, 100]} to={[184, 100]} color={MUTED} />
-      <Robot x={248} y={96} s={0.95} menu />
-      <Word x={248} y={187}>{labels.menu}</Word>
+      <Robot x={82} y={58} s={0.76} press={['C']} />
+      <g transform="translate(132 22)"><circle r="16" fill={RED} /><rect x="-6.5" y="-6.5" width="13" height="13" rx="2.5" fill="#fff" /></g>
+      <Lines x={82} y={114} a={labels.centre1} b={labels.centre2} />
+      <Arrow from={[148, 62]} to={[176, 62]} color={MUTED} />
+      <Robot x={242} y={58} s={0.76} menu />
+      <Lines x={242} y={114} a={labels.menu1} b={labels.menu2} />
+      <Modes y={141} />
+      <Word x={160} y={188} size={11.5}>{labels.choose}</Word>
     </svg>
   );
 }

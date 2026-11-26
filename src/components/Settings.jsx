@@ -8,7 +8,7 @@ import { SOURCE_TEXT } from '../script.js';
 // The settings, from the gear at the top left: the language (Italian, French, German, English), the theme, and what used to be the
 // link diagnostics, for the adult next to the screen: the robot, the journal of the link (what went between the page and the robot),
 // a test of the link, the Python that runs on the robot, the keys.
-export default function Settings({ t, onShowLink, onShowManual, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, showName, onShowName, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
+export default function Settings({ t, onShowLink, onShowManual, showPath, onShowPath, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, showName, onShowName, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
   const [copied, setCopied] = useState(false);
   const [logCopied, setLogCopied] = useState(false);
   const [showScript, setShowScript] = useState(false);
@@ -63,6 +63,17 @@ export default function Settings({ t, onShowLink, onShowManual, lang, onLang, th
           </div>
         </div>
         <p className="muted small">{t.manual.hint}</p>
+
+        <div className="rows">
+          <div className="row">
+            <span className="row-label" id="show-path-label">{t.diag.path}</span>
+            <div className="seg" role="group" aria-labelledby="show-path-label">
+              <button type="button" className={showPath ? 'on' : ''} aria-pressed={showPath} onClick={() => onShowPath(true)}>{t.qr.yes}</button>
+              <button type="button" className={!showPath ? 'on' : ''} aria-pressed={!showPath} onClick={() => onShowPath(false)}>{t.qr.no}</button>
+            </div>
+          </div>
+        </div>
+        <p className="muted small">{t.diag.pathHint}</p>
 
         <div className="rows">
           <div className="row">

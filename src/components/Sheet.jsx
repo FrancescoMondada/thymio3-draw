@@ -5,7 +5,7 @@ import { figurePath, bounds, dirOf, localToWorld } from '../geometry.js';
 import { fmt } from '../i18n.js';
 
 // The sheet of paper seen from above, in millimetres (x to the right, y up, flipped for the screen): the robot, what it is going to draw
-// (dotted), and the ink it has left (solid). With a real robot there is neither ink nor movement: its trace is the pen's, on the paper, and the
+// (dotted; for a geometric program only if the settings ask for it), and the ink it has left (solid). With a real robot there is neither ink nor movement: its trace is the pen's, on the paper, and the
 // robot on the screen stays where it was put (the page only lights the step in progress on the dotted line). The robot can be dragged and turned while it is waiting: it draws from where it stands.
 // With the page's own form chosen, a touch on the paper puts a point (a point can be dragged, a double touch takes it away) and the
 // robot is only moved by its pen: its body would be in the way of the points under it.
@@ -64,7 +64,7 @@ function endMark(e) {
 const poly = (pts) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(2)},${(-y).toFixed(2)}`).join('') + 'Z';
 const norm = (h) => ((((h + 180) % 360) + 360) % 360) - 180;
 
-export default function Sheet({ t, snap, figure, view, live, onPlace, onCustom }) {
+export default function Sheet({ t, snap, figure, view, live, showPath = false, onPlace, onCustom }) {
   const svgRef = useRef(null);
   const drag = useRef(null);
   const [frozen, setFrozen] = useState(null);
@@ -76,6 +76,7 @@ export default function Sheet({ t, snap, figure, view, live, onPlace, onCustom }
   const isCustom = figure.id === CUSTOM_ID;                     // one of the page's own forms: points put on the sheet, or a program
   const isPoints = isCustom && !figure.program;
   const editing = isPoints && !busy;
+  const planned = !figure.program || showPath;                  // a program's path is shown in advance only when the settings say so
   const figKey = isCustom ? JSON.stringify([figure.steps.map((s) => [s.len, s.turn]), figure.repeat, figure.endAngle]) : figure.id;
   const preview = useMemo(
     () => figurePath(figure, { pose: { x: anchor.x, y: anchor.y, h: anchor.h }, mm: snap.mm, loss: snap.loss, size: snap.size }),
@@ -86,10 +87,10 @@ export default function Sheet({ t, snap, figure, view, live, onPlace, onCustom }
   // draws, the view only grows (it keeps whatever the robot has needed), so that the picture does not shake.
   const reach = useRef(null);
   const idleFrame = useMemo(() => {
-    const pts = [...preview.points, ...(isPoints ? preview.ends || [] : []).flatMap((e) => [onHeading(e.x, e.y, e.to, END_LEN + 4), onHeading(e.x, e.y, e.from, END_R + 12)]), ...robotBox(anchor)];
+    const pts = [...(planned ? preview.points : []), ...(isPoints ? preview.ends || [] : []).flatMap((e) => [onHeading(e.x, e.y, e.to, END_LEN + 4), onHeading(e.x, e.y, e.from, END_R + 12)]), ...robotBox(anchor)];     // (a hidden path does not move the view either)
     if (!live) for (const s of snap.ink) for (const p of s.points) pts.push(p);          // (a real robot's trace is the pen's, on the paper: none here)
     return bounds(pts);
-  }, [preview, anchor.x, anchor.y, anchor.h, snap.ink, snap.version, live]);
+  }, [preview, anchor.x, anchor.y, anchor.h, snap.ink, snap.version, live, planned]);
   if (!busy) reach.current = null;
   else reach.current = unionBounds(reach.current || idleFrame, bounds(robotBox(snap.pose)));
   const frame = useMemo(() => {
@@ -194,7 +195,7 @@ export default function Sheet({ t, snap, figure, view, live, onPlace, onCustom }
           <RobotBody light={light} />
         </g>
 
-        <g className="ghost" aria-hidden="true">
+        {planned && <g className="ghost" aria-hidden="true">
           <path d={d(preview.points)} className="ghost-line" />
           {corners.map(([x, y], i) => <circle key={i} cx={x} cy={-y} r="1.5" className="ghost-corner" />)}
           {activeLeg && <path d={d(activeLeg)} className="ghost-active" />}
@@ -211,7 +212,7 @@ export default function Sheet({ t, snap, figure, view, live, onPlace, onCustom }
               </g>
             );
           })}
-        </g>
+        </g>}
 
         {!live && (
           <g className="ink" aria-hidden="true">

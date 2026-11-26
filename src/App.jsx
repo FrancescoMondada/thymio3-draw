@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Sheet from './components/Sheet.jsx';
 import Picker from './components/Picker.jsx';
-import Recipe from './components/Recipe.jsx';
 import DrawBar from './components/DrawBar.jsx';
 import LinkInfo from './components/LinkInfo.jsx';
 import SizeControl from './components/SizeControl.jsx';
@@ -48,6 +47,8 @@ export default function App() {
   const [qr, setQr] = useState(null);                                 // the QR code shown ({ show, caption }) or the scanner ({ scan })
   const [showName, setShowName] = useState(() => load('draw.pseudo.show', '0') === '1');   // the pseudonym is written under the QR code only when the adult turns it on (kept only once chosen)
   const chooseShowName = (v) => { setShowName(v); save('draw.pseudo.show', v ? '1' : '0'); };
+  const [showPath, setShowPath] = useState(() => load('draw.preview', '0') === '1');       // "Géométrie": the sheet shows in advance what the program will draw (off until turned on)
+  const choosePath = (v) => { setShowPath(v); save('draw.preview', v ? '1' : '0'); };
   const [name, setName] = useState(() => { const kept = load('draw.name', null); return kept === null ? randomName() : cleanName(kept); });   // under the QR code, drawn at random the first time
   const bluetooth = supportsBluetooth();
 
@@ -256,7 +257,7 @@ export default function App() {
 
   // ---- the QR code of the configuration: what it shows, and what a scanned one sets up (share.js) -------------------
   const showQr = () => setQr({
-    show: encodeConfig({ lang, showName, figure: snap.sel, size: snap.size, repeat: snap.repeat, endAngle: snap.endAngle, custom: snap.custom, program: snap.program, own: snap.sel === CUSTOM_ID ? snap.mine : undefined }),
+    show: encodeConfig({ lang, showName, figure: snap.sel, size: snap.size, repeat: snap.repeat, endAngle: snap.endAngle, custom: snap.custom, program: snap.program, own: snap.sel === CUSTOM_ID ? snap.mine : undefined, showPath }),
     caption: { name: showName ? name.trim() : '', when: formatWhen(new Date(), lang) },
   });
   const scanQr = () => setQr({ scan: true });
@@ -268,6 +269,7 @@ export default function App() {
     if (!change) return false;
     if (cfg.lang) setLang(cfg.lang);
     if (cfg.showName != null) { setShowName(cfg.showName); save('draw.pseudo.show', cfg.showName ? '1' : '0'); }      // the setting travels, the pseudonym does not
+    if (cfg.showPath != null) { setShowPath(cfg.showPath); save('draw.preview', cfg.showPath ? '1' : '0'); }
     if (Object.keys(change).length) send(change);
     setTimeout(() => setQr(null), 700);                           // the frame goes green for a moment
     return true;
@@ -364,14 +366,14 @@ export default function App() {
           <header className="card-head">
             <div>
               <h2>{t.sheet.title}</h2>
-              <p className="muted small">{live ? t.sheet.hintReal : t.sheet.hint}</p>
+              <p className="muted small">{live ? t.sheet.hintReal : figure.program && !showPath ? t.sheet.hintHidden : t.sheet.hint}</p>
             </div>
             <div className="seg" role="group" aria-label={t.sheet.view}>
               <button type="button" className={view === 'zoom' ? 'on' : ''} aria-pressed={view === 'zoom'} onClick={() => setView('zoom')}>{t.sheet.zoom}</button>
               <button type="button" className={view === 'a4' ? 'on' : ''} aria-pressed={view === 'a4'} onClick={() => setView('a4')}>{t.sheet.a4}</button>
             </div>
           </header>
-          <Sheet t={t} snap={snap} figure={figure} view={view} live={live} onPlace={place} onCustom={customApi} />
+          <Sheet t={t} snap={snap} figure={figure} view={view} live={live} showPath={showPath} onPlace={place} onCustom={customApi} />
           <DrawBar
             t={t} snap={snap} figure={figure} online={online} live={live} canDraw={canDraw} telling={telling} onDraw={draw} onStop={stop} onNew={newSheet} onCentre={centre}
             simSpeed={simSpeed} onSpeed={setSimSpeed}
@@ -385,10 +387,6 @@ export default function App() {
             <Picker t={t} sel={snap.sel} mine={snap.mine} onSelect={choose} onOwn={chooseOwn} disabled={busy || !online} figure={figure} custom={snap.custom} repeat={snap.repeat} endAngle={snap.endAngle} onCustom={customApi} program={snap.program} onProgram={programApi} active={running} />
             {snap.sel !== CUSTOM_ID && <SizeControl t={t} figure={figure} size={snap.size} mm={snap.mm} loss={snap.loss} onSize={setSize} disabled={busy || !online} />}
           </section>
-          <section className="card recipe-card" aria-label={t.recipe.title}>
-            <h2>{t.recipe.title}</h2>
-            <Recipe t={t} figure={figure} size={snap.size} mm={snap.mm} loss={snap.loss} step={snap.step} phase={snap.phase} rep={snap.rep} drawing={snap.state === 'draw' && snap.drawing >= 0} />
-          </section>
         </div>
       </main>
 
@@ -399,7 +397,7 @@ export default function App() {
       {settings && (
         <Settings
           t={t} onShowLink={showLink} onShowManual={showManual} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} link={link} battery={snap.battery} running={snap.running} lastError={snap.error}
-          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())} showName={showName} onShowName={chooseShowName}
+          name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())} showName={showName} onShowName={chooseShowName} showPath={showPath} onShowPath={choosePath}
           log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing} canTest={live && link.status === 'connected'} onClose={() => setSettings(false)} bluetooth={bluetooth}
         />
       )}

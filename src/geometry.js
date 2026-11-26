@@ -4,7 +4,7 @@
 // Frame: x to the right, y up (the sheet seen from above, the robot's first heading is up). A heading is in degrees, counter-clockwise
 // from "up", like the gyroscope's angle and the firmware's turns (a left turn is positive). The pen is in the middle of the axle.
 import {
-  FIGURES, MM_PER_UNIT, WHEEL_BASE, MOVE_SPEED, SIDE_MS, sideLengthMm, pivotSpeeds, SIZE_DEFAULT, CUSTOM_ID, CUSTOM_UNIT_MS, CUSTOM_UNITS_MAX, CUSTOM_MAX_STEPS,
+  FIGURES, MM_PER_UNIT, WHEEL_BASE, MOVE_SPEED, sideLengthMm, pivotSpeeds, SIZE_DEFAULT, CUSTOM_ID, CUSTOM_UNIT_MS, CUSTOM_UNITS_MAX, CUSTOM_MAX_STEPS,
   clampRepeat, clampEndAngle,
 } from './spec.js';
 import { programFigure } from './program.js';
@@ -99,37 +99,6 @@ export function closure(fig, opts = {}) {
 }
 
 export const totalTurn = (fig) => fig.steps.reduce((sum, s) => sum + (s.pivot ? Math.sign(s.pivot[1] - s.pivot[0]) * 360 : s.turn), 0) * (fig.repeat || 1);
-
-// The steps of a figure as the recipe card shows them: a regular figure is one group repeated, the others a row per step.
-// [{ steps: [index, ...], repeat }]
-export function recipeGroups(fig) {
-  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const first = fig.steps[0];
-  if (fig.steps.length > 1 && fig.steps.every((s) => same(s, first))) return [{ steps: [0], repeat: fig.steps.length }];
-  return fig.steps.map((_, i) => ({ steps: [i], repeat: 1 }));
-}
-
-// How long the robot takes (seconds), as it drives: the sides at speed 140 for 1.2 s each, a pause after each, the turns at about
-// 34 degrees a second (speed 100 at most) and the pivots (one wheel at speed 140: 15 s a circle). A guide, not a promise.
-export function durationSec(fig, { mmPerUnit = MM_PER_UNIT, wheelBase = WHEEL_BASE, size = SIZE_DEFAULT } = {}) {
-  let t = 0;
-  const turning = (a) => 0.8 + Math.abs(a) / (((ROT_RATE * mmPerUnit) / wheelBase) * (180 / Math.PI)) + 0.2;
-  const times = fig.repeat || 1;
-  fig.steps.forEach((s, i) => {
-    if (s.len != null) {
-      if (s.len > 0) t += (s.len / (MOVE_SPEED * mmPerUnit) + 0.5) * times;
-      if (s.turn) t += turning(s.turn) * times;
-    } else if (s.side) {
-      t += ((SIDE_MS / 1000) * (s.side[0] / s.side[1]) * size) / 100 + 0.5;
-      if (s.turn) t += turning(s.turn);
-    } else {
-      const [l, r] = pivotSpeeds(s.pivot, size);
-      t += 360 / deg((Math.abs(r - l) * mmPerUnit) / wheelBase) + 0.2;
-    }
-  });
-  return t;
-}
-const ROT_RATE = 2 * 100;                                                // both wheels at speed 100, opposite: 200 units of difference
 
 // ---- dead reckoning: where the robot is, from what it says ---------------------------------------------------------------
 // The mode says, every 100 ms, the gyroscope's angle since the drawing began and the distance it has driven since, added up by the mode at

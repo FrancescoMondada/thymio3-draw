@@ -10,7 +10,7 @@
 // not valid is dropped: what comes from a scan is data, read strictly, never run. `f` is the figure (0..15 the robot's, 16 the form of the
 // page's own), `z` the size in percent, `r` the times the form is drawn, `e` the angle it ends with in degrees, `c` the points of the form
 // in whole millimetres, x:y, in the robot's frame (its pen at 0:0, facing up, x to its right; the robot's own place on the sheet is not
-// carried). `c=` with nothing after it is a form with no point. `g` is the geometric program (program.js: f40 forward, l90 left, r90 right,
+// carried). `v` is the setting "show the path of a program in advance" (1 yes, 0 no). `c=` with nothing after it is a form with no point. `g` is the geometric program (program.js: f40 forward, l90 left, r90 right,
 // 4(...) a loop), `g=` an empty one; `k=g` says that figure 16 is the program and not the points. `p` is the setting "show the pseudonym
 // under the QR code" (1 yes, 0 no): the setting travels, the pseudonym itself does not (it is text written on the page of each device).
 import { LANGS } from './i18n.js';
@@ -38,12 +38,13 @@ const within = (n, lo, hi) => Number.isInteger(n) && n >= lo && n <= hi;
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const whole = (v, lo, hi) => clamp(Math.round(Number(v) || 0), lo, hi);
 
-// What the page holds -> the text. `c`: { lang, showName, figure, size, repeat, endAngle, custom: [[x, y], ...], program: [...], own };
+// What the page holds -> the text. `c`: { lang, showName, showPath, figure, size, repeat, endAngle, custom: [[x, y], ...], program: [...], own };
 // a part that is missing is left out. `own`: 'program' when figure 16 is the geometric program.
 export function encodeConfig(c) {
   const out = [PREFIX];
   if (LANGS.some((l) => l.id === c.lang)) out.push(`l=${c.lang}`);
   if (c.showName != null) out.push(`p=${c.showName ? 1 : 0}`);
+  if (c.showPath != null) out.push(`v=${c.showPath ? 1 : 0}`);
   if (c.figure != null) out.push(`f=${whole(c.figure, 0, CUSTOM_ID)}`);
   if (c.size != null) out.push(`z=${whole(c.size, SIZE_MIN, SIZE_MAX)}`);
   if (c.repeat != null) out.push(`r=${whole(c.repeat, REPEAT_MIN, REPEAT_MAX)}`);
@@ -67,6 +68,7 @@ export function decodeConfig(text) {
     switch (key) {
       case 'l': if (LANGS.some((l) => l.id === v)) out.lang = v; break;
       case 'p': if (v === '1' || v === '0') out.showName = v === '1'; break;
+      case 'v': if (v === '1' || v === '0') out.showPath = v === '1'; break;
       case 'f': { const n = int(v); if (within(n, 0, CUSTOM_ID)) out.figure = n; break; }
       case 'z': { const n = int(v); if (within(n, SIZE_MIN, SIZE_MAX)) out.size = n; break; }
       case 'r': { const n = int(v); if (within(n, REPEAT_MIN, REPEAT_MAX)) out.repeat = n; break; }

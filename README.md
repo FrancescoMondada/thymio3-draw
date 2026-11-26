@@ -37,7 +37,7 @@ pendant 0,5 s) lance le dessin; le bouton du milieu quitte le mode.
 - **Le corps du robot s'allume de la couleur que voit le capteur sous lui** (rouge, jaune, vert, bleu, violet, blanc; le cyan, le noir et « rien » l'éteignent, comme
   `HandleBodyColor`).
 - Les angles entiers du firmware ne bouclent pas tout à fait: **l'heptagone tourne de 7 × 51 = 357°, l'étoile à 7 branches de 7 × 154 = 1078°** (2° de moins que 3 tours);
-  sur le papier la figure finit à 1,4 mm (heptagone) et 0,8 mm (étoile) de son départ, et le trapèze (42° et 138°) à 0,6 mm. La page le dit dans la fiche « Comment il dessine ».
+  sur le papier la figure finit à 1,4 mm (heptagone) et 0,8 mm (étoile) de son départ, et le trapèze (42° et 138°) à 0,6 mm.
 
 Écarts avec le firmware (voulus):
 
@@ -64,8 +64,7 @@ pendant 0,5 s) lance le dessin; le bouton du milieu quitte le mode.
   où il s'est arrêté et dans le cap où il s'est arrêté**. Une forme qui ne finit pas comme elle a commencé dessine donc un motif: la maison finit tournée d'un quart de tour (son dernier côté va
   vers la gauche), quatre maisons font une rosace autour du point de départ. **Virage à la fin** (−180° à 180°, de 5° en 5°, 0° au départ): le virage que le robot fait après le dernier
   côté, à la fin de chaque fois (donc aussi après la dernière: c'est l'angle d'arrêt). Un seul côté droit avec 72° répété cinq fois est un pentagone; une forme qui finit tournée de −α avec α
-  comme angle de fin se retrouve dans son cap de départ, et une forme fermée est alors retracée sur elle-même (ou se prolonge en chaîne si elle est ouverte). La fiche « Comment il dessine » dit
-  « Répète 3 fois · 2/3 », la barre « Fois 2 sur 3 », et l'aperçu en pointillé montre toutes les fois.
+  comme angle de fin se retrouve dans son cap de départ, et une forme fermée est alors retracée sur elle-même (ou se prolonge en chaîne si elle est ouverte). La barre dit « Fois 2 sur 3 », et l'aperçu en pointillé montre toutes les fois.
   Sur la feuille, le **virage à la fin est dessiné** au bout de chaque fois: un petit arc fléché orange avec son angle (« +72° ») et une flèche qui donne le cap dans lequel le robot s'arrête
   (renforcée à la toute fin: c'est l'angle d'arrêt). Même sans virage (0°), la flèche de cap marque l'arrêt.
   Le robot reçoit une liste de côtés: chacun est un temps (en unités de 5 ms, à la vitesse 140, d'après la calibration du robot) et le virage qui le suit; un virage nul continue tout droit, le
@@ -75,7 +74,7 @@ pendant 0,5 s) lance le dessin; le bouton du milieu quitte le mode.
   sur chaque côté, que le carré fasse 34 ou 92 mm. La calibration « 15 cm » du firmware, faite à 300, contient elle aussi cette perte: la vitesse en mm/s est `150 / (300 × (D − TAU300_S))` et non `150 / (300 × D)`.
   **`TAU300_S = 0,115 s` est ajusté sur deux carrés dessinés par un vrai robot et mesurés sur la feuille (2026-11-01, calibration 8 142 712)**: côtés de 0,78 s (taille 65 %) et 2,04 s (170 %), que la page annonçait à 31 et
   82 mm, et qui font **34 et 92 mm** sur le papier; le modèle donne 33,6 et 91,9. La page s'en sert avec un vrai robot (le robot virtuel n'accélère pas, il garde l'ancien calcul):
-  - **le pointillé et la recette d'un polygone** montrent le côté réellement dessiné (`mm × taille − perte`), le champ « Côté » aussi (on y tape une longueur en mm, la taille en pour cent s'en déduit);
+  - **le pointillé d'un polygone** montre le côté réellement dessiné (`mm × taille − perte`), le champ « Côté » aussi (on y tape une longueur en mm, la taille en pour cent s'en déduit);
   - **« Ma forme »**: le robot reçoit pour chaque côté le temps `(longueur + perte) / vitesse` (`unitsFor`), donc la longueur demandée est celle qui est dessinée, et les proportions sont gardées;
   - **ni l'encre ni le robot ne sont suivis à l'écran** avec un vrai robot (voir « Ce que montre la page »): le modèle sert à ce que le robot dessine la longueur annoncée, pas à la reconstituer.
 
@@ -86,8 +85,9 @@ Le quatrième onglet de « Choisis une figure » (`src/program.js`, `src/compone
 - Quatre instructions: **Avance** (1 à 300 mm), **Gauche** et **Droite** (1 à 360°, sur place), **Répète** (1 à 50 fois), qui contient sa propre liste; jusqu'à **trois boucles l'une dans l'autre** et **40 instructions**. Sous chaque
   liste, les boutons qui ajoutent une instruction à sa fin; chaque ligne a son nombre (− / + ou au clavier), « monter » et « enlever ». Pas de « reculer » (le robot dessine en avançant).
 - **Pas de modèles**: l'onglet ne montre que « Mon programme », vide au départ; l'élève écrit tout lui-même, avec des lignes (« Avance »), des angles (« Gauche », « Droite ») et des boucles (« Répète »). Exemple: `8 × [4 × (avance 30, gauche 90), gauche 45]` fait une rosace.
-- Le **pointillé** montre ce que le programme dessinera, depuis la place du robot (le robot se tire et se tourne comme pour les figures du firmware; écrire le programme ne le déplace pas). La **recette** donne les côtés tels que le robot les
-  fera, et **l'instruction en cours s'allume** dans le programme pendant le dessin.
+- **La prévisualisation du trajet est désactivée au départ** (Paramètres → « Prévisualisation du trajet (Géométrie) », Oui / **Non**): la feuille ne montre pas à l'avance ce que le programme dessinera, ni pointillé ni côté en cours (et la vue ne se
+  cadre pas dessus): à l'élève de le prévoir, puis au robot (virtuel: l'encre; réel: le papier) de le dessiner. Activée, le **pointillé** montre la figure depuis la place du robot. Le réglage reste sur l'appareil et voyage dans le code QR (`v`).
+  Il ne concerne que « Géométrie ». Le robot se tire et se tourne comme pour les figures du firmware (écrire le programme ne le déplace pas), et **l'instruction en cours s'allume** dans le programme pendant le dessin.
 - **Pour le robot, c'est la forme libre** (figure 16): les instructions deviennent la liste de ses côtés et virages (`compileProgram`), dite par les mêmes messages: rien de nouveau dans le mode MicroPython. Deux « avance » de suite font un seul
   côté, des virages qui se suivent un seul virage. **Le robot tient 24 côtés**: quand le programme est *une seule boucle autour de tout*, il n'en reçoit que le corps et compte lui-même les fois (36 × « avance 10, gauche 10 » = un côté);
   sinon le programme est écrit en entier, et s'il dépasse 24 côtés la page le dit et « Dessiner » reste grisé. Un programme vide, ou sans aucun « avance », aussi.
@@ -106,8 +106,7 @@ Le quatrième onglet de « Choisis une figure » (`src/program.js`, `src/compone
     toujours la figure au milieu et le robot à son départ.)
   - Avec un vrai robot, le **corps** prend la couleur que voit son capteur (comme sur le robot). **La page ne trace pas d'encre avec un vrai robot**: le tracé qui compte est celui du stylo sur le papier,
     et celui qu'on reconstitue à l'écran n'est qu'une approximation. Elle montre le pointillé (ce que le robot va dessiner, accroché là où le dessin a commencé) et l'étape en cours qui s'y allume; **le robot de l'écran n'avance pas non plus** (il reste là où on l'a posé): s'il bougeait, on verrait l'écart avec le vrai.
-  - **Les longueurs sont données « environ »** (recette, taille de la figure, longueur de la forme, écart au départ, diamètre): un vrai robot n'est pas parfait, le stylo bouge un peu dans son trou. La recette ne dit
-    plus qu'une figure revient « exactement » au départ.
+  - **Les longueurs sont données « environ »** (taille de la figure, longueur de la forme et du programme): un vrai robot n'est pas parfait, le stylo bouge un peu dans son trou.
 - **Ce que la page retient**: la langue, le thème, la vue, la figure choisie, la taille et le réglage du pseudo restent d'une visite à l'autre (`localStorage`). **La forme libre, le nombre de fois, le virage
   à la fin et le programme de « Géométrie » ne restent que dans l'onglet** (`sessionStorage`): un rechargement les retrouve, une nouvelle visite commence avec une « Ma forme » vide, et sur la figure de départ si la dernière visite
   finissait sur la forme libre. Avant, la forme restait pour de bon: le robot (ou le pointillé) redessinait le lendemain une vieille forme, répétée et tournée comme on l'avait laissée (« un vieux dessin étrange »).
@@ -116,13 +115,11 @@ Le quatrième onglet de « Choisis une figure » (`src/program.js`, `src/compone
   virtuel la **vitesse de sa simulation** (×1, ×2, ×5, ×10); avec un vrai robot, la couleur qu'il voit et « main détectée ». Le robot virtuel n'a pas de capteur de couleur.
 - **Choisis une figure** (à droite): les deux rangées du robot, une à la fois (comme avant et arrière changent de rangée), huit vignettes numérotées de 1 à 8 qui dessinent le
   trajet du stylo; en dessous, les LED Lego du robot telles qu'il les allume, puis le réglage de la **taille**. Le troisième onglet, « Ma forme », est la forme libre faite de points; le quatrième, « Géométrie », la forme écrite comme un programme.
-- **Comment il dessine**: la recette de la figure telle que le mode l'exécute, à la taille choisie (« Avance 1,2 s ≈ 47 mm, tourne de 90° à gauche, répète 4 fois »), la somme des virages, si la
-  figure revient au départ, sa durée, et l'étape en cours allumée pendant le dessin. Pour « Ma forme » et « Géométrie », la liste de leurs côtés. La longueur du côté vient de la calibration du robot connecté (voir « Statut »).
 - **Paramètres** (cliquer **l'icône de l'application**, ou la touche D): la langue (italien, français, allemand, anglais; celle du navigateur si c'est l'une des quatre), le thème
-  (auto, clair, sombre), le **manuel du robot** (ci-dessous), et le diagnostic: la liaison avec le robot, le journal, le test de la liaison, le programme du robot.
+  (auto, clair, sombre), le **manuel du robot** (ci-dessous), la **prévisualisation du trajet** de « Géométrie » (désactivée au départ), et le diagnostic: la liaison avec le robot, le journal, le test de la liaison, le programme du robot.
 - **Le manuel du robot, pour les élèves** (Paramètres → « Manuel du robot » → « Afficher en grand », `Manual.jsx` et `ManualArt.jsx`), sur le modèle de celui de thymio3-cards: **le mode Peintre du firmware, sans tablette**, en **un seul écran
-  sans défilement** (téléphone en hauteur ou en largeur, ordinateur, projecteur) et presque sans mots: choisir le mode (dans le menu, les flèches jusqu'au bleu devant et jaune derrière, puis le bouton du milieu), choisir la figure (les 16 figures sur leurs
-  deux rangées, les LED qui comptent la place, les flèches), dessiner (stylo au milieu, main derrière puis retirée; à la fin trois clignotements et un son), arrêter (le bouton du milieu ramène au menu). Tout vient de `main/mode.c` et `main/drawer.c`;
+  sans défilement** (téléphone en hauteur ou en largeur, ordinateur, projecteur) et presque sans mots: choisir le mode **parmi les autres** (dans le menu, les flèches passent d'un mode à l'autre: la rangée des dix modes avec les couleurs de leurs lumières, celui-ci encadré; bleu devant et jaune derrière, puis le bouton du milieu), choisir la figure (les 16 figures sur leurs
+  deux rangées, les flèches, et pour le carré **les deux rangées de LED**: quatre allumées devant, aucune derrière), dessiner (stylo au milieu, main derrière puis retirée; à la fin trois clignotements et un son), arrêter (le bouton du milieu arrête et **ramène au choix des modes**, la même rangée). Tout vient de `main/mode.c` et `main/drawer.c`;
   il ne parle pas de la page ni de « Géométrie ». Échap ou la croix le ferme.
 
 Clavier: ← → = figure précédente / suivante, ↑ ↓ = changer de rangée, Espace = dessiner / stop, N = nouvelle feuille, D = paramètres.
@@ -138,13 +135,14 @@ Le texte du code (`src/share.js`, strict: un champ faux est ignoré, un code qui
 
 ```
 T3D1;l=fr;p=0;f=16;z=100;r=4;e=0;c=0:50,25:75,50:50,50:0,0:0;g=
-T3D1;l=fr;p=0;f=16;z=100;r=1;e=0;c=;k=g;g=8(4(f30l90)l45)
+T3D1;l=fr;p=0;v=0;f=16;z=100;r=1;e=0;c=;k=g;g=8(4(f30l90)l45)
 ```
 
 | Champ | Contenu |
 | --- | --- |
 | `l` | la langue (it, fr, de, en) |
 | `p` | le réglage « Afficher le pseudo » sous le code: `1` oui, `0` non (le pseudo lui-même ne voyage pas) |
+| `v` | le réglage « Prévisualisation du trajet (Géométrie) »: `1` oui, `0` non |
 | `f` | la figure: 0 à 15 celles du robot, 16 la forme à soi (points ou programme, voir `k`) |
 | `z` | la taille, en % (40 à 300) |
 | `r` | combien de fois la forme libre est dessinée (1 à 50) |
@@ -245,7 +243,7 @@ npm run build
 - `tests/link.test.js`: la liaison complète (connexion, module installé une fois, lanceur, figure, dessiner, stop, trames perdues → relance avec le changement, l'encre et la position
   dans le store, le départ d'une forme seul dans son message, les trames espacées de 40 ms sur une liaison rapide, une réponse de départ perdue sans relance) contre le faux robot Bluetooth.
 - `tests/geometry.test.js`, `tests/protocol.test.js`, `tests/store.test.js`, `tests/i18n.test.js` (aucune clé de langue manquante).
-- `tests/program.test.js`: le programme de « Géométrie » (édition, limites, côtés, boucle autour de tout, texte du code); `tests/ink.test.js` fait dessiner chaque modèle au robot virtuel sur son pointillé.
+- `tests/program.test.js`: le programme de « Géométrie » (édition, limites, côtés, boucle autour de tout, texte du code); `tests/ink.test.js` fait dessiner des programmes au robot virtuel sur leur tracé prévu.
 - La page a été regardée dans un navigateur (ordinateur 1100 × 760 clair et sombre, 375 × 812, 360 × 640, 844 × 390; robot virtuel et faux robot; vue Zoom et vue A4).
 
 **Pas vérifié, à regarder avec un vrai robot:**
@@ -275,8 +273,8 @@ npm run build
 | --- | --- |
 | `src/py/drawer_mode.py` | Le mode dessinateur en MicroPython, qui tourne sur le robot |
 | `src/spec.js` | Les 16 figures (la table du mode), les nombres du firmware, les états, les couleurs |
-| `src/program.js` | « Géométrie »: les instructions, leur édition, les côtés que le robot reçoit, les modèles, le texte pour le code QR |
-| `src/geometry.js` | Le trajet du stylo de chaque figure, la recette, la fermeture, la durée; `Odometer` (le trait reconstitué) |
+| `src/program.js` | « Géométrie »: les instructions, leur édition, les côtés que le robot reçoit, le texte pour le code QR |
+| `src/geometry.js` | Le trajet du stylo de chaque figure, la fermeture; `Odometer` (le trait reconstitué) |
 | `src/protocol.js` | Lignes `@@`, trames dans les LED, objets des messages |
 | `src/share.js`, `src/qr.js`, `src/names.js` | Le texte du code QR (écrit et lu strictement), le dessin et la lecture d'un code, les pseudos |
 | `src/script.js`, `src/script-core.js` | Le mode comme module (réduit, nom à base de hash) |
@@ -287,7 +285,7 @@ npm run build
 | `src/App.jsx` | État, robot virtuel ou réel, clavier, mise en page |
 | `src/components/Sheet.jsx`, `RobotBody.jsx` | La feuille (grille, pointillé, encre, robot qu'on tire et qu'on tourne) et le dessin du robot |
 | `src/components/Program.jsx`, `Manual.jsx`, `ManualArt.jsx` | L'éditeur du programme; le manuel du robot et ses dessins |
-| `src/components/Picker.jsx`, `FigureIcon.jsx`, `SizeControl.jsx`, `Recipe.jsx`, `DrawBar.jsx` | Les deux rangées de figures et les onglets « Ma forme » et « Géométrie », les vignettes, la taille, la recette, Dessiner / Stop et ce qui est sous la feuille |
+| `src/components/Picker.jsx`, `FigureIcon.jsx`, `SizeControl.jsx`, `DrawBar.jsx` | Les deux rangées de figures et les onglets « Ma forme » et « Géométrie », les vignettes, la taille, Dessiner / Stop et ce qui est sous la feuille |
 | `src/components/QrShow.jsx`, `QrScan.jsx` | Le code en grand avec son pseudo et sa date; le lecteur (caméra derrière un viseur, ou une photo) |
 | `src/components/Settings.jsx`, `Help.jsx`, `LinkInfo.jsx`, `ErrorBoundary.jsx` | Paramètres (langue, thème, pseudo, diagnostic), aide, nom et batterie du robot |
 | `src/i18n.js`, `src/styles.css` | Textes (FR, EN, IT, DE) et style (couleurs en jetons, clair et sombre) |
