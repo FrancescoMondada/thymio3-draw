@@ -21,7 +21,7 @@ function picture(code, k = 6, quiet = 4) {
 }
 
 const house = encodeConfig({ lang: 'fr', figure: 16, size: 100, repeat: 4, endAngle: 0, custom: [[0, 50], [25, 75], [50, 50], [50, 0], [0, 0]] });
-const biggest = encodeConfig({ lang: 'en', figure: 16, size: 300, repeat: 50, endAngle: -180, custom: Array.from({ length: MAX_POINTS }, (_, i) => [-(500 + i), -(400 + i)]) });
+const biggest = encodeConfig({ lang: 'en', showName: true, figure: 16, size: 300, repeat: 50, endAngle: -180, custom: Array.from({ length: MAX_POINTS }, (_, i) => [-(500 + i), -(400 + i)]), program: Array.from({ length: 40 }, () => ({ op: 'f', v: 300 })), own: 'program' });      // the longest form of points and the longest program together
 
 test('a code is read back as the text it was made for', async () => {
   for (const text of [house, biggest, 'T3D1;f=3', encodeConfig({ figure: 3, size: 100 })]) {
@@ -33,7 +33,7 @@ test('a code is read back as the text it was made for', async () => {
 
 test('the code of a usual configuration is a small one, easy to scan across a room; the biggest one still is readable', () => {
   assert.ok(qrMatrix(house).size <= 45, `${qrMatrix(house).size} modules a side`);
-  assert.ok(qrMatrix(biggest).size <= 77, `${qrMatrix(biggest).size} modules a side`);
+  assert.ok(qrMatrix(biggest).size <= 85, `${qrMatrix(biggest).size} modules a side`);
 });
 
 test('a text that does not fit gives no code, and an image without a code gives no text', async () => {

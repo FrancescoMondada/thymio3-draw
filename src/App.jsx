@@ -9,6 +9,7 @@ import QrShow from './components/QrShow.jsx';
 import QrScan from './components/QrScan.jsx';
 import Settings from './components/Settings.jsx';
 import Help from './components/Help.jsx';
+import Manual from './components/Manual.jsx';
 import { BluetoothIcon, HelpIcon, QrIcon, ScanIcon, WarnIcon } from './icons.jsx';
 import { I18N, detectLang } from './i18n.js';
 import { Telemetry, DEFAULT_FIGURE, MAX_POINTS } from './store.js';
@@ -19,7 +20,8 @@ import { CMD } from './protocol.js';
 import { APP_LINKS, applyConfig, decodeConfig, encodeConfig } from './share.js';
 import { cleanName, formatWhen, randomName } from './names.js';
 import { stepSelection, otherGroupFirst, CUSTOM_ID, CUSTOM_PRESETS, clampSize, clampRepeat, clampEndAngle } from './spec.js';
-import { figureOf, customMessage } from './geometry.js';
+import { figureFor, customMessage } from './geometry.js';
+import { PROGRAM_PRESETS, addNode, setValue, removeNode, moveNode, cleanProgram, activeKeys } from './program.js';
 
 const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch { return fallback; } };
 const save = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private mode */ } };
@@ -36,6 +38,7 @@ export default function App() {
   const [source, setSource] = useState('virtual');                  // 'virtual' | 'robot'
   const [simSpeed, setSimSpeed] = useState(1);
   const [settings, setSettings] = useState(false);
+  const [manual, setManual] = useState(false);                      // the manual of the robot on its own, over the page, for the class
   const [help, setHelp] = useState(() => load('draw.help', '') !== '1');
   const [log, setLog] = useState([]);
   const [testing, setTesting] = useState(false);
@@ -53,9 +56,12 @@ export default function App() {
     let custom = [];
     for (const old of ['draw.custom', 'draw.repeat', 'draw.endAngle']) { try { localStorage.removeItem(old); } catch { /* private mode */ } }      // (kept for good by an earlier version)
     try { const v = JSON.parse(loadTab('draw.custom', '[]')); if (Array.isArray(v)) custom = v.filter((q) => Array.isArray(q) && q.every(Number.isFinite)).slice(0, MAX_POINTS); } catch { /* none */ }
+    let program = [];
+    try { program = cleanProgram(JSON.parse(loadTab('draw.program', '[]'))); } catch { /* none */ }
+    const mine = loadTab('draw.mine', 'points') === 'program' ? 'program' : 'points';
     let sel = Number(load('draw.sel', DEFAULT_FIGURE));
-    if (!Number.isInteger(sel) || sel < 0 || sel > CUSTOM_ID || (sel === CUSTOM_ID && !custom.length)) sel = DEFAULT_FIGURE;          // ("Ma forme" without its form is not where a visit begins)
-    tele.current = new Telemetry(sel, { size: clampSize(Number(load('draw.size', 100))), custom, repeat: clampRepeat(Number(loadTab('draw.repeat', 1))), endAngle: clampEndAngle(Number(loadTab('draw.endAngle', 0))) });
+    if (!Number.isInteger(sel) || sel < 0 || sel > CUSTOM_ID || (sel === CUSTOM_ID && !(mine === 'program' ? program : custom).length)) sel = DEFAULT_FIGURE;          // (a form of one's own without its form is not where a visit begins)
+    tele.current = new Telemetry(sel, { size: clampSize(Number(load('draw.size', 100))), custom, repeat: clampRepeat(Number(loadTab('draw.repeat', 1))), endAngle: clampEndAngle(Number(loadTab('draw.endAngle', 0))), program, mine });
   }
   const snap = useSyncExternalStore(tele.current.subscribe, tele.current.getSnapshot);
 
@@ -85,6 +91,8 @@ export default function App() {
   useEffect(() => { saveTab('draw.repeat', String(snap.repeat)); }, [snap.repeat]);
   useEffect(() => { saveTab('draw.endAngle', String(snap.endAngle)); }, [snap.endAngle]);
   useEffect(() => { saveTab('draw.custom', JSON.stringify(snap.custom.map(([x, y]) => [Math.round(x * 10) / 10, Math.round(y * 10) / 10]))); }, [snap.custom]);
+  useEffect(() => { saveTab('draw.program', JSON.stringify(snap.program)); }, [snap.program]);
+  useEffect(() => { saveTab('draw.mine', snap.mine); }, [snap.mine]);
 
   // ---- the virtual robot's clock ---------------------------------------------------------------------
   useEffect(() => { sim.current.speed = simSpeed; }, [simSpeed]);
@@ -199,11 +207,11 @@ export default function App() {
     if (tellingRef.current) return;          // a second click would tell the robot it all again, over the drawing
     const change = { select: s.sel, size: s.size, command: CMD.START };
     if (s.sel === CUSTOM_ID) {
-      const steps = figureOf(CUSTOM_ID, s.custom, s.repeat, s.endAngle).steps;
-      if (!steps.length) return;
+      const own = tele.current.figureNow();          // made of points, or written as a program: the robot is told its sides the same way
+      if (!own.steps.length) return;
       const m = tele.current.model();
-      change.custom = customMessage(steps, m.k, m.rampMs);
-      change.repeat = s.repeat;
+      change.custom = customMessage(own.steps, m.k, m.rampMs);
+      change.repeat = own.repeat;
     }
     tellingRef.current = true;
     setTelling(true);
@@ -225,6 +233,23 @@ export default function App() {
     setEndAngle: (a) => { if (tele.current.s.state === 'idle') tele.current.chooseEndAngle(a); },
     max: MAX_POINTS,
   }), []);
+  // one of the page's own forms (the points, or the program): the robot knows both as figure 16
+  const chooseOwn = useCallback((kind) => {
+    if (tele.current.s.state !== 'idle') return;
+    tele.current.chooseOwn(kind);
+    send({ select: CUSTOM_ID });
+  }, [send]);
+  const programApi = useMemo(() => {
+    const change = (edit) => { if (tele.current.s.state === 'idle') tele.current.programSet(edit(tele.current.s.program)); };
+    return {
+      add: (into, op) => change((p) => addNode(p, into, op)),
+      set: (path, v) => change((p) => setValue(p, path, v)),
+      remove: (path) => change((p) => removeNode(p, path)),
+      move: (path, delta) => change((p) => moveNode(p, path, delta)),
+      clear: () => change(() => []),
+      preset: (name) => { if (tele.current.s.state === 'idle') tele.current.programPreset(PROGRAM_PRESETS[name]); },
+    };
+  }, []);
   const stop = useCallback(() => send({ command: CMD.STOP }), [send]);
   const newSheet = useCallback(() => tele.current.newSheet(), []);
   const centre = useCallback(() => tele.current.centre(), []);
@@ -232,10 +257,11 @@ export default function App() {
 
   // ---- the QR code of the configuration: what it shows, and what a scanned one sets up (share.js) -------------------
   const showQr = () => setQr({
-    show: encodeConfig({ lang, showName, figure: snap.sel, size: snap.size, repeat: snap.repeat, endAngle: snap.endAngle, custom: snap.custom }),
+    show: encodeConfig({ lang, showName, figure: snap.sel, size: snap.size, repeat: snap.repeat, endAngle: snap.endAngle, custom: snap.custom, program: snap.program, own: snap.sel === CUSTOM_ID ? snap.mine : undefined }),
     caption: { name: showName ? name.trim() : '', when: formatWhen(new Date(), lang) },
   });
   const scanQr = () => setQr({ scan: true });
+  const showManual = useCallback(() => { setSettings(false); setManual(true); }, []);
   const showLink = useCallback((kind) => { if (APP_LINKS[kind]) { setSettings(false); setQr({ show: APP_LINKS[kind], link: kind }); } }, []);   // from the settings: the link to the app, for the tablets of the class
   const applyScanned = useCallback((text) => {
     const cfg = decodeConfig(text);
@@ -258,14 +284,15 @@ export default function App() {
   const live = source === 'robot';
   const online = snap.running && (!live || snap.link.status === 'connected');
   const keyState = useRef({});
-  keyState.current = { snap, online, choose, draw, stop, newSheet };
+  keyState.current = { snap, online, choose, draw, stop, newSheet, manual };
   useEffect(() => {
     const on = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const tag = e.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target?.isContentEditable) return;
       if (e.target?.closest?.('[role="slider"], .robot')) return;                                  // the robot has its own arrows
-      const { snap: s, online: ok, choose: pick, draw: go, stop: halt, newSheet: fresh } = keyState.current;
+      const { snap: s, online: ok, choose: pick, draw: go, stop: halt, newSheet: fresh, manual: reading } = keyState.current;
+      if (reading) return;                                                                          // the manual is over the page
       if (e.key === 'd' || e.key === 'D') { setSettings((v) => !v); return; }
       if (!ok) return;
       const busy = s.state !== 'idle';
@@ -287,8 +314,9 @@ export default function App() {
   const starting = live && link.status === 'connected' && !snap.running && !snap.error && started.current && snap.t === 0;
   const modeEnded = live && link.status === 'connected' && !snap.running && snap.t > 0;
   const busy = snap.state !== 'idle';
-  const figure = useMemo(() => figureOf(snap.sel, snap.custom, snap.repeat, snap.endAngle), [snap.sel, snap.custom, snap.repeat, snap.endAngle]);
+  const figure = useMemo(() => figureFor(snap), [snap.sel, snap.custom, snap.repeat, snap.endAngle, snap.program, snap.mine]);
   const canDraw = snap.sel !== CUSTOM_ID || figure.steps.length > 0;
+  const running = figure.program && snap.state === 'draw' && snap.drawing >= 0 ? activeKeys(figure, snap.step, snap.phase) : [];     // the instructions the robot is on
 
   return (
     <div className="app">
@@ -355,7 +383,7 @@ export default function App() {
         <div className="col side">
           <section className="card pick-card" aria-label={t.pick.title}>
             <h2>{t.pick.title}</h2>
-            <Picker t={t} sel={snap.sel} onSelect={choose} disabled={busy || !online} figure={figure} custom={snap.custom} repeat={snap.repeat} endAngle={snap.endAngle} onCustom={customApi} />
+            <Picker t={t} sel={snap.sel} mine={snap.mine} onSelect={choose} onOwn={chooseOwn} disabled={busy || !online} figure={figure} custom={snap.custom} repeat={snap.repeat} endAngle={snap.endAngle} onCustom={customApi} program={snap.program} onProgram={programApi} active={running} />
             {snap.sel !== CUSTOM_ID && <SizeControl t={t} figure={figure} size={snap.size} mm={snap.mm} loss={snap.loss} onSize={setSize} disabled={busy || !online} />}
           </section>
           <section className="card recipe-card" aria-label={t.recipe.title}>
@@ -367,10 +395,11 @@ export default function App() {
 
       {qr && qr.show !== undefined && <QrShow text={qr.show} t={t} label={qr.link ? { web: t.qr.link, ios: t.qr.linkIos }[qr.link] : t.qr.show} caption={qr.caption} onClose={() => setQr(null)} />}
       {qr && qr.scan && <QrScan t={t} onText={applyScanned} onClose={() => setQr(null)} />}
+      {manual && <Manual t={t} onClose={() => setManual(false)} />}
       {help && <Help t={t} onClose={() => { setHelp(false); save('draw.help', '1'); }} />}
       {settings && (
         <Settings
-          t={t} onShowLink={showLink} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} link={link} battery={snap.battery} running={snap.running} lastError={snap.error}
+          t={t} onShowLink={showLink} onShowManual={showManual} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} link={link} battery={snap.battery} running={snap.running} lastError={snap.error}
           name={name} onName={(v) => setName(cleanName(v))} onNewName={() => setName(randomName())} showName={showName} onShowName={chooseShowName}
           log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing} canTest={live && link.status === 'connected'} onClose={() => setSettings(false)} bluetooth={bluetooth}
         />

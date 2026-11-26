@@ -112,3 +112,39 @@ test('the setting "show the pseudonym" travels in the code, the pseudonym does n
   assert.deepEqual(decodeConfig(encodeConfig(both)), both);
   assert.ok(!/name|pseudo/i.test(encodeConfig({ ...both, name: 'NeonFalcon42' })), 'the pseudonym is not written in the code');
 });
+
+test('everything of the page travels: the points, the program, and which of the two is chosen', () => {
+  const program = [{ op: 'x', v: 8, body: [{ op: 'x', v: 4, body: [{ op: 'f', v: 30 }, { op: 'l', v: 90 }] }, { op: 'l', v: 45 }] }];
+  const all = { ...FULL, showName: true, program, own: 'program' };
+  const text = encodeConfig(all);
+  assert.match(text, /;k=g;g=8\(4\(f30l90\)l45\)$/);
+  assert.deepEqual(decodeConfig(text), all);
+  assert.equal(encodeConfig({ figure: 16, own: 'points', program: [] }), 'T3D1;f=16;g=', 'the points need no word, an empty program is said');
+  assert.deepEqual(decodeConfig('T3D1;f=16;g='), { figure: 16, program: [] });
+  assert.deepEqual(decodeConfig('T3D1;f=16;k=x;g=f9999'), { figure: 16 }, 'a program that is not one is dropped, the rest is kept');
+  // the page that scans it: the program, and the program chosen
+  const t = new Telemetry(3);
+  const change = applyConfig(t, decodeConfig(text));
+  assert.equal(t.s.sel, 16);
+  assert.equal(t.s.mine, 'program');
+  assert.deepEqual(t.s.program, program);
+  assert.deepEqual(t.s.custom, FULL.custom);
+  assert.equal(t.figureNow().repeat, 8);
+  assert.equal(change.select, 16);
+  // a code of points scanned on a page that has the program chosen goes back to the points
+  applyConfig(t, decodeConfig(encodeConfig(FULL)));
+  assert.equal(t.s.mine, 'points');
+  assert.deepEqual(t.s.program, program, 'a code that holds no program leaves it');
+  // the program travels with a figure of the robot as well
+  const other = new Telemetry(3);
+  applyConfig(other, decodeConfig(encodeConfig({ figure: 2, program })));
+  assert.equal(other.s.sel, 2);
+  assert.deepEqual(other.s.program, program);
+});
+
+test('the biggest configuration, program included, fits the limit', () => {
+  const program = Array.from({ length: 40 }, () => ({ op: 'f', v: 300 }));
+  const widest = encodeConfig({ lang: 'en', showName: true, figure: 16, size: 300, repeat: 50, endAngle: -180, custom: Array.from({ length: MAX_POINTS }, () => [-600, -600]), program, own: 'program' });
+  assert.ok(widest.length < MAX_TEXT, `${widest.length} characters`);
+  assert.equal(decodeConfig(widest).program.length, 40);
+});

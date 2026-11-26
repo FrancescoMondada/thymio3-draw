@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { Telemetry } from '../src/store.js';
 import { SimBackend } from '../src/sim/sim-backend.js';
 import { figurePath, customMessage, figureOf } from '../src/geometry.js';
+import { PROGRAM_PRESETS, programFigure } from '../src/program.js';
 import { mmPerUnit, CUSTOM_ID } from '../src/spec.js';
 import { CMD } from '../src/protocol.js';
 
@@ -67,5 +68,31 @@ for (const [name, pose, pts, times, angle] of [...CASES.map((c) => [...c, 1, 0])
     if (times > 1) assert.equal(tele.s.rep, times - 1, 'it was in its last time');
     const first = stroke.points[0];
     assert.ok(Math.hypot(first[0] - ghost[0][0], first[1] - ghost[0][1]) < 1e-6, 'the ink begins at the pen');
+  });
+}
+
+for (const [name, program] of Object.entries(PROGRAM_PRESETS)) {
+  test(`a geometric program is drawn on the line it plans, by the virtual robot: ${name}`, async () => {
+    const tele = new Telemetry(CUSTOM_ID, { program, mine: 'program' });
+    const sim = new SimBackend((e) => tele.push(e), { speed: 10 });
+    sim.start({ sel: CUSTOM_ID });
+    tele.place({ x: 0, y: 0, h: 0 });
+    sim.place(tele.s.pose);
+    const fig = programFigure(program);
+    sim.apply({ select: CUSTOM_ID, custom: customMessage(fig.steps, mmPerUnit(tele.s.cal.fw)), repeat: fig.repeat, command: CMD.START });
+    for (let i = 0; i < 9000 && !tele.s.draws; i++) { sim.advance(100); await wait(); }
+    await new Promise((r) => setTimeout(r, 150));
+    assert.equal(tele.s.draws, 1);
+    const stroke = tele.s.ink[0];
+    const plan = figurePath(tele.figureNow(), { pose: stroke.start, mm: tele.s.mm }).points;
+    const dist = (p) => Math.min(...plan.slice(1).map((b, i) => {
+      const [ax, ay] = plan[i];
+      const dx = b[0] - ax, dy = b[1] - ay;
+      const t = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / (dx * dx + dy * dy || 1)));
+      return Math.hypot(p[0] - (ax + t * dx), p[1] - (ay + t * dy));
+    }));
+    const deviation = Math.max(...stroke.points.map(dist));
+    assert.ok(deviation < 2, `the ink is ${deviation.toFixed(2)} mm from the planned line`);
+    assert.equal(tele.s.rep, fig.repeat - 1, 'it was in its last time');
   });
 }

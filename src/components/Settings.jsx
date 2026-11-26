@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CloseIcon, CopyIcon, DownloadIcon, DiceIcon, QrIcon } from '../icons.jsx';
+import { CloseIcon, CopyIcon, DownloadIcon, DiceIcon, QrIcon, BookIcon } from '../icons.jsx';
 import { APP_URL } from '../share.js';
 import { NAME_MAX } from '../names.js';
 import { LANGS } from '../i18n.js';
@@ -8,7 +8,7 @@ import { SOURCE_TEXT } from '../script.js';
 // The settings, from the gear at the top left: the language (Italian, French, German, English), the theme, and what used to be the
 // link diagnostics, for the adult next to the screen: the robot, the journal of the link (what went between the page and the robot),
 // a test of the link, the Python that runs on the robot, the keys.
-export default function Settings({ t, onShowLink, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, showName, onShowName, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
+export default function Settings({ t, onShowLink, onShowManual, lang, onLang, theme, onTheme, link, battery, running, lastError, name, onName, onNewName, showName, onShowName, log, onClearLog, onTest, testing, canTest, onClose, bluetooth }) {
   const [copied, setCopied] = useState(false);
   const [logCopied, setLogCopied] = useState(false);
   const [showScript, setShowScript] = useState(false);
@@ -55,6 +55,14 @@ export default function Settings({ t, onShowLink, lang, onLang, theme, onTheme, 
           </div>
         </div>
         <p className="muted small">{t.qr.linkHint} <a className="app-link" href={APP_URL} target="_blank" rel="noopener noreferrer">{APP_URL.replace(/^https:\/\//, '')}</a></p>
+
+        <div className="rows">
+          <div className="row">
+            <span className="row-label">{t.manual.row}</span>
+            <button type="button" className="btn small" onClick={onShowManual}><BookIcon size={18} />{t.manual.button}</button>
+          </div>
+        </div>
+        <p className="muted small">{t.manual.hint}</p>
 
         <div className="rows">
           <div className="row">

@@ -5,7 +5,8 @@
 // The sheet is a plane in millimetres, x to the right, y up, its middle at (0, 0). The robot's pose on it is not measured by anything:
 // it is where the person put the robot, followed by dead reckoning from what the robot says while it draws (geometry.js: Odometer).
 import { robotModel, FACTORY_15CM_TICKS, CUSTOM_ID, CUSTOM_MAX_STEPS, SIZE_DEFAULT, clampSize, clampRepeat, clampEndAngle } from './spec.js';
-import { Odometer, startPoseFor, figureOf, worldToLocal } from './geometry.js';
+import { Odometer, startPoseFor, figureFor, worldToLocal } from './geometry.js';
+import { cleanProgram } from './program.js';
 
 export const DEFAULT_FIGURE = 3;                 // a square: the first thing most people want to see
 const MIN_STEP_MM = 0.4;                         // the ink gets a new point when the pen has moved this far
@@ -15,7 +16,7 @@ export const MAX_POINTS = CUSTOM_MAX_STEPS - 1;  // (the first turn on the spot 
 
 const blank = () => ({ x: 0, y: 0, h: 0 });
 
-function fresh(sel = DEFAULT_FIGURE, size = SIZE_DEFAULT, custom = [], repeat = 1, endAngle = 0) {
+function fresh(sel = DEFAULT_FIGURE, size = SIZE_DEFAULT, custom = [], repeat = 1, endAngle = 0, program = [], mine = 'points') {
   const { mm, loss } = robotModel();
   return {
     version: 0,
@@ -27,6 +28,8 @@ function fresh(sel = DEFAULT_FIGURE, size = SIZE_DEFAULT, custom = [], repeat = 
     custom,                               // the page's own form: points [x, y] in mm in the robot's frame (its pen at 0, 0, facing up)
     repeat,                               // the times the form is drawn
     endAngle,                             // the angle it ends with, in degrees (the turn after its last side)
+    program,                              // the page's other own form: a geometric program (program.js)
+    mine,                                 // which of the two figure 16 is: 'points' (put on the sheet) or 'program'
     rep: 0,                               // the time it is in (0 is the first)
     drawing: -1,                          // the figure in the middle of being drawn (-1: none)
     step: 0,                              // the step in progress, and whether it is a side (or a pivot) or a turn
@@ -38,7 +41,7 @@ function fresh(sel = DEFAULT_FIGURE, size = SIZE_DEFAULT, custom = [], repeat = 
     cal: { fw: FACTORY_15CM_TICKS, bw: FACTORY_15CM_TICKS, rot90: 16384, known: false },
     mm,                                   // the length of a base side, from the robot's own calibration
     loss,                                 // what a timed side loses to the robot's start-up and braking, mm (a real robot's)
-    pose: startPoseFor(figureOf(sel, custom, repeat, endAngle), { mm, size, loss }),
+    pose: startPoseFor(figureFor({ sel, custom, repeat, endAngle, mine, program }), { mm, size, loss }),
     placed: 0,                            // counts the times the person (or the page) put the robot down: the virtual robot follows
     autoPlace: true,                      // while the sheet is blank the robot waits where the chosen figure is in the middle
     ink: [],                              // strokes: { figure, start: the pose it began from, points: [[x, y], ...], done }
@@ -52,8 +55,8 @@ function fresh(sel = DEFAULT_FIGURE, size = SIZE_DEFAULT, custom = [], repeat = 
 }
 
 export class Telemetry {
-  constructor(sel = DEFAULT_FIGURE, { size = SIZE_DEFAULT, custom = [], repeat = 1, endAngle = 0 } = {}) {
-    this.s = fresh(sel, clampSize(size), custom, clampRepeat(repeat), clampEndAngle(endAngle));
+  constructor(sel = DEFAULT_FIGURE, { size = SIZE_DEFAULT, custom = [], repeat = 1, endAngle = 0, program = [], mine = 'points' } = {}) {
+    this.s = fresh(sel, clampSize(size), custom, clampRepeat(repeat), clampEndAngle(endAngle), cleanProgram(program), mine === 'program' ? 'program' : 'points');
     this.real = false;                    // the robot drawn is a real one: it accelerates and brakes (see robotModel in spec.js)
     this.odo = new Odometer();
     this.applyModel();
@@ -68,8 +71,8 @@ export class Telemetry {
 
   // Forget everything but the link and the figure chosen (a new run: the other robot).
   clear() {
-    const { link, sel, size, custom, repeat, endAngle } = this.s;
-    this.s = fresh(sel, size, custom, repeat, endAngle);
+    const { link, sel, size, custom, repeat, endAngle, program, mine } = this.s;
+    this.s = fresh(sel, size, custom, repeat, endAngle, program, mine);
     this.s.link = link;
     this.odo = new Odometer();
     this.applyModel();
@@ -97,8 +100,30 @@ export class Telemetry {
     this.autoPlace();
   }
 
+  // The person chooses one of the page's own forms: figure 16, made of points or written as a program. The robot is told 16.
+  chooseOwn(kind) {
+    const s = this.s;
+    const mine = kind === 'program' ? 'program' : 'points';
+    this.hold = { figure: CUSTOM_ID, at: Date.now() };
+    if (s.sel !== CUSTOM_ID || s.mine !== mine) { s.sel = CUSTOM_ID; s.mine = mine; this.autoPlace(); }
+    this.publish();
+  }
+
+  // The program as the person has changed it. The robot on the screen stays where it is while one writes.
+  programSet(program) {
+    this.s.program = cleanProgram(program);
+    this.publish();
+  }
+
+  // A ready-made program. As for the ready-made forms of points: the robot stays where it is, except on a blank sheet it was not put on.
+  programPreset(program) {
+    this.s.program = cleanProgram(program);
+    this.autoPlace();
+    this.publish();
+  }
+
   // The figure on the screen: one of the sixteen, or the page's own form.
-  figureNow() { return figureOf(this.s.sel, this.s.custom, this.s.repeat, this.s.endAngle); }
+  figureNow() { return figureFor(this.s); }
 
   // The person sets the angle the form ends with.
   chooseEndAngle(degrees) {
@@ -260,7 +285,7 @@ export class Telemetry {
         if (ev.state === 'draw') {
           if (s.drawing < 0) this.drawingBegan(ev.figure);              // "@@draw" did not come
           const step = Math.max(0, ev.step);
-          if (step < s.step && s.sel === CUSTOM_ID && s.rep + 1 < s.repeat) s.rep += 1;         // the step goes back to the first: the form begins again ("@@rep" did not come)
+          if (step < s.step && s.sel === CUSTOM_ID && s.rep + 1 < this.figureNow().repeat) s.rep += 1;   // the step goes back to the first: the form begins again ("@@rep" did not come)
           if (step !== s.step) s.phase = 's';                            // a step begins with its side ("@@seg" did not come)
           s.step = step;
           this.follow({ ms: ev.ms, angle: ev.angle, ml: ev.left, mr: ev.right, dist: ev.dist });

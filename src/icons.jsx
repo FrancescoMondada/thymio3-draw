@@ -42,6 +42,7 @@ export const StopIcon = (p) => <I {...p}><rect x="6" y="6" width="12" height="12
 export const TargetIcon = (p) => <I {...p}><circle cx="12" cy="12" r="7.5" /><circle cx="12" cy="12" r="2" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" /></I>;
 export const HandIcon = (p) => <I {...p}><path d="M8 12V6.5a1.5 1.5 0 013 0V11M11 11V5a1.5 1.5 0 013 0v6M14 11V6.5a1.5 1.5 0 013 0V13M17 11.5a1.5 1.5 0 013 0V15c0 3.5-2.5 6-6 6h-1c-2.5 0-4-1.2-5.5-3.5L4.5 14a1.5 1.5 0 012.3-1.9L8 13.5" /></I>;
 export const RotateIcon = (p) => <I {...p}><path d="M20 12a8 8 0 11-3-6.2M20 4v4.5h-4.5" /></I>;
+export const BookIcon = (p) => <I {...p}><path d="M12 6.5C10 4.8 7 4.5 3.5 5v13.5c3.5-.5 6.5-.2 8.5 1.5 2-1.7 5-2 8.5-1.5V5c-3.5-.5-6.5-.2-8.5 1.5zM12 6.5V20" /></I>;
 export const PenIcon = (p) => <I {...p}><path d="M4 20l1-4L16.5 4.5a2 2 0 013 3L8 19z" /><path d="M14.5 6.5l3 3" /></I>;
 
 // The QR code of the page (to show it), the eye in a viewfinder (to scan another one: not a QR code, so that the two buttons are

@@ -73,9 +73,10 @@ export default function Sheet({ t, snap, figure, view, live, onPlace, onCustom }
   const drawing = busy && snap.drawing >= 0;
   const last = snap.ink[snap.ink.length - 1];
   const anchor = drawing && last ? last.start : snap.pose;
-  const isCustom = figure.id === CUSTOM_ID;
-  const editing = isCustom && !busy;
-  const figKey = isCustom ? JSON.stringify([snap.custom, snap.repeat, snap.endAngle]) : figure.id;
+  const isCustom = figure.id === CUSTOM_ID;                     // one of the page's own forms: points put on the sheet, or a program
+  const isPoints = isCustom && !figure.program;
+  const editing = isPoints && !busy;
+  const figKey = isCustom ? JSON.stringify([figure.steps.map((s) => [s.len, s.turn]), figure.repeat, figure.endAngle]) : figure.id;
   const preview = useMemo(
     () => figurePath(figure, { pose: { x: anchor.x, y: anchor.y, h: anchor.h }, mm: snap.mm, loss: snap.loss, size: snap.size }),
     [figKey, snap.size, anchor.x, anchor.y, anchor.h, snap.mm, snap.loss],
@@ -85,7 +86,7 @@ export default function Sheet({ t, snap, figure, view, live, onPlace, onCustom }
   // draws, the view only grows (it keeps whatever the robot has needed), so that the picture does not shake.
   const reach = useRef(null);
   const idleFrame = useMemo(() => {
-    const pts = [...preview.points, ...(preview.ends || []).flatMap((e) => [onHeading(e.x, e.y, e.to, END_LEN + 4), onHeading(e.x, e.y, e.from, END_R + 12)]), ...robotBox(anchor)];
+    const pts = [...preview.points, ...(isPoints ? preview.ends || [] : []).flatMap((e) => [onHeading(e.x, e.y, e.to, END_LEN + 4), onHeading(e.x, e.y, e.from, END_R + 12)]), ...robotBox(anchor)];
     if (!live) for (const s of snap.ink) for (const p of s.points) pts.push(p);          // (a real robot's trace is the pen's, on the paper: none here)
     return bounds(pts);
   }, [preview, anchor.x, anchor.y, anchor.h, snap.ink, snap.version, live]);
@@ -198,7 +199,7 @@ export default function Sheet({ t, snap, figure, view, live, onPlace, onCustom }
           {corners.map(([x, y], i) => <circle key={i} cx={x} cy={-y} r="1.5" className="ghost-corner" />)}
           {activeLeg && <path d={d(activeLeg)} className="ghost-active" />}
           <circle cx={start[0]} cy={-start[1]} r="2.6" className="ghost-start" />
-          {isCustom && (preview.ends || []).map((e, i) => {
+          {isPoints && (preview.ends || []).map((e, i) => {
             const m = endMark(e);
             return (
               <g key={`end${i}`} className={`end-mark ${e.last ? 'final' : ''}`}>

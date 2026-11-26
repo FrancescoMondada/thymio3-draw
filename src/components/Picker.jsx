@@ -1,28 +1,33 @@
 import React from 'react';
 import FigureIcon from './FigureIcon.jsx';
-import { FIGURES, GROUPS, GROUP_SIZE, CUSTOM_ID, CUSTOM_PRESETS, REPEAT_MIN, REPEAT_MAX, END_ANGLE_MAX, groupOf, placeInGroup, idOf } from '../spec.js';
+import { FIGURES, GROUPS, GROUP_SIZE, CUSTOM_PRESETS, REPEAT_MIN, REPEAT_MAX, END_ANGLE_MAX, groupOf, placeInGroup, idOf } from '../spec.js';
 import { customLength } from '../geometry.js';
+import Program from './Program.jsx';
 import { fmt } from '../i18n.js';
 import { EraserIcon, ResetIcon, MinusIcon, PlusIcon } from '../icons.jsx';
 import { num } from '../util.js';
 
 // The robot's two menus as a picture book: a row of eight polygons and a row of eight shapes, one at a time (like the robot's forward and
 // backward buttons change row, and its arrows go along the row). Under them, the robot's Lego LEDs, which count the place in the row.
-// A third tab is the page's own form: its tools (models, undo, clear) instead of tiles.
-export default function Picker({ t, sel, onSelect, disabled, figure, custom, repeat, endAngle, onCustom }) {
-  const group = groupOf(sel);
+// Two more tabs are the page's own forms, both the robot's figure 16: "Ma forme", points put on the sheet, with its tools (models, undo,
+// clear) instead of tiles, and "Géométrie", the form written as a program of moves and turns (Program.jsx).
+const TABS = [...GROUPS, 'geometry'];
+export default function Picker({ t, sel, mine, onSelect, onOwn, disabled, figure, custom, repeat, endAngle, onCustom, program, onProgram, active }) {
+  const group = groupOf(sel) === 'custom' && mine === 'program' ? 'geometry' : groupOf(sel);
   const place = placeInGroup(sel);
   const figures = FIGURES.filter((f) => f.group === group);
   return (
     <div className="picker">
       <div className="seg picker-groups" role="group" aria-label={t.pick.title}>
-        {GROUPS.map((g) => (
+        {TABS.map((g) => (
           <button key={g} type="button" className={g === group ? 'on' : ''} aria-pressed={g === group} disabled={disabled}
-            onClick={() => { if (g !== group) onSelect(g === 'custom' ? CUSTOM_ID : idOf(g, 1)); }}>{t.pick[g]}</button>
+            onClick={() => { if (g !== group) { if (g === 'custom') onOwn('points'); else if (g === 'geometry') onOwn('program'); else onSelect(idOf(g, 1)); } }}>{t.pick[g]}</button>
         ))}
       </div>
       {group === 'custom' ? (
         <CustomTools t={t} figure={figure} custom={custom} repeat={repeat} endAngle={endAngle} onCustom={onCustom} disabled={disabled} />
+      ) : group === 'geometry' ? (
+        <Program t={t} program={program} figure={figure} onProgram={onProgram} active={active} disabled={disabled} />
       ) : (
       <div className="tiles" role="group" aria-label={t.pick[group]}>
         {figures.map((f) => {
@@ -39,17 +44,21 @@ export default function Picker({ t, sel, onSelect, disabled, figure, custom, rep
         })}
       </div>
       )}
-      <div className="lego" title={t.pick.leds}>
-        {GROUPS.filter((g) => g !== 'custom').map((g) => (
-          <div key={g} className={`lego-row ${g === group ? 'on' : ''}`}>
-            <span className="lego-label">{t.pick.row[g]}</span>
-            <span className="lego-pips" aria-hidden="true">
-              {Array.from({ length: GROUP_SIZE }, (_, i) => <i key={i} className={g === group && i >= GROUP_SIZE - place ? 'lit' : ''} />)}
-            </span>
+      {group !== 'geometry' && (
+        <>
+          <div className="lego" title={t.pick.leds}>
+            {GROUPS.filter((g) => g !== 'custom').map((g) => (
+              <div key={g} className={`lego-row ${g === group ? 'on' : ''}`}>
+                <span className="lego-label">{t.pick.row[g]}</span>
+                <span className="lego-pips" aria-hidden="true">
+                  {Array.from({ length: GROUP_SIZE }, (_, i) => <i key={i} className={g === group && i >= GROUP_SIZE - place ? 'lit' : ''} />)}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <p className="muted small">{t.pick.leds}</p>
+          <p className="muted small">{t.pick.leds}</p>
+        </>
+      )}
     </div>
   );
 }

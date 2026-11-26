@@ -19,6 +19,7 @@ const { Telemetry } = await import('../src/store.js');
 const { CMD } = await import('../src/protocol.js');
 const { figurePath, customSteps, customMessage, figureOf } = await import('../src/geometry.js');
 const { mmPerUnit } = await import('../src/spec.js');
+const { programFigure } = await import('../src/program.js');
 const { FIGURES } = await import('../src/spec.js');
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -266,6 +267,17 @@ test('a form drawn three times is told with its number and the robot says each t
   await until(() => l.last('end'), 25000);
   assert.deepEqual(l.events.filter((e) => e.type === 'rep').map((e) => e.rep), [1, 2]);
   assert.equal(l.events.filter((e) => e.type === 'draw').length, 1);
+  await done(l);
+});
+
+test('a geometric program is told like a form: the robot draws the loop\'s body that many times and says each time', async () => {
+  const l = await connected();
+  await l.core.start({ sel: 3 });
+  const fig = programFigure([{ op: 'x', v: 3, body: [{ op: 'f', v: 20 }, { op: 'l', v: 120 }] }]);
+  await l.core.apply({ select: 16, custom: customMessage(fig.steps, mmPerUnit(9000000)), repeat: fig.repeat, command: CMD.START });
+  await until(() => l.last('end'), 25000);
+  assert.equal(l.last('draw').figure, 16);
+  assert.deepEqual(l.events.filter((e) => e.type === 'rep').map((e) => e.rep), [1, 2]);
   await done(l);
 });
 

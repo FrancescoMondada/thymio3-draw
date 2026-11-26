@@ -7,6 +7,7 @@ import {
   FIGURES, MM_PER_UNIT, WHEEL_BASE, MOVE_SPEED, SIDE_MS, sideLengthMm, pivotSpeeds, SIZE_DEFAULT, CUSTOM_ID, CUSTOM_UNIT_MS, CUSTOM_UNITS_MAX, CUSTOM_MAX_STEPS,
   clampRepeat, clampEndAngle,
 } from './spec.js';
+import { programFigure } from './program.js';
 
 export const rad = (deg) => (deg * Math.PI) / 180;
 export const deg = (r) => (r * 180) / Math.PI;
@@ -225,6 +226,9 @@ export function customFigure(points, repeat = 1, endAngle = 0) {
 
 // The figure of an id: one of the sixteen, or the page's own form (drawn `repeat` times, ending with `endAngle` degrees of turn).
 export const figureOf = (id, custom = [], repeat = 1, endAngle = 0) => (id >= CUSTOM_ID ? customFigure(custom, repeat, endAngle) : FIGURES[Math.max(0, Math.trunc(id) || 0)]);
+
+// The figure of what the page holds: one of the sixteen, or its own form, made of points put on the sheet or written as a program.
+export const figureFor = ({ sel, custom, repeat, endAngle, mine, program }) => (sel >= CUSTOM_ID && mine === 'program' ? programFigure(program) : figureOf(sel, custom, repeat, endAngle));
 
 // What the robot is told of a side: its time in units of 5 ms, from the robot's own speed (mm per second per unit of speed).
 // `rampMs`: the time a side loses to the speed controller (see RAMP_MS): the robot is told that much more, to cover the length asked.

@@ -5,7 +5,7 @@ import { fmt } from '../i18n.js';
 import { num } from '../util.js';
 
 // What the robot does for the chosen figure, step by step, as the mode does it: the same table (FIGURES in spec.js is the mode's FIGS), at
-// the size chosen, or the sides of the page's own form. While it draws, the step it is in is lit.
+// the size chosen, or the sides of the page's own form (points, or program). While it draws, the step it is in is lit.
 export default function Recipe({ t, figure: fig, size, mm, loss = 0, step, phase, rep = 0, drawing }) {
   const custom = fig.id === CUSTOM_ID;
   const groups = recipeGroups(fig);
@@ -40,7 +40,7 @@ export default function Recipe({ t, figure: fig, size, mm, loss = 0, step, phase
       }
       if (i === last && !s.turn) {
         if (times === 1) out.push(<li key={`${i}t`} className={`step turn ${extra}`}><span className="glyph" aria-hidden="true">■</span><span>{t.recipe.noTurn}</span></li>);
-      } else if (s.turn) out.push(turnRow(`${i}t`, s.turn, lit && (phase === 't' || s.len === 0), extra, i === last ? t.recipe.atEnd : ''));
+      } else if (s.turn) out.push(turnRow(`${i}t`, s.turn, lit && (phase === 't' || s.len === 0), extra, i === last && !fig.program ? t.recipe.atEnd : ''));
       return out;
     }
     if (s.side) {

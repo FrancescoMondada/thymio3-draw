@@ -54,7 +54,7 @@ test('the lengths are given as "about", and nothing is said to be exact, in ever
   const exact = /exactement|exactly|esattamente|\bgenau\b|précisément|precisely/i;
   for (const l of LANGS) {
     const t = I18N[l.id];
-    for (const [key, text] of [['recipe.sideMm', t.recipe.sideMm], ['recipe.diameter', t.recipe.diameter], ['recipe.gap', t.recipe.gap], ['size.figure', t.size.figure], ['custom.total', t.custom.total], ['recipe.time', t.recipe.time]]) {
+    for (const [key, text] of [['recipe.sideMm', t.recipe.sideMm], ['recipe.diameter', t.recipe.diameter], ['recipe.gap', t.recipe.gap], ['size.figure', t.size.figure], ['custom.total', t.custom.total], ['recipe.time', t.recipe.time], ['geo.total', t.geo.total]]) {
       assert.match(text, about[l.id], `${l.id} ${key}`);
     }
     assert.match(t.custom.length, /≈/, `${l.id} the lengths on the sheet`);

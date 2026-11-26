@@ -440,3 +440,46 @@ kbd { font: 600 12px var(--mono); padding: 2px 7px; border-radius: 6px; border: 
 /* the link to the application, at the top of the settings */
 .link-buttons { margin-top: 0; }
 .app-link { display: block; color: var(--ink); font-weight: 700; overflow-wrap: anywhere; }
+
+/* ---- the form written as a program (the "Géométrie" tab) ------------------------------------------------------- */
+.program { margin: 10px 0 6px; display: flex; flex-direction: column; gap: 8px; }
+.prog-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.prog-list.inner { margin: 5px 0 2px 0; padding-left: 6px; border-left: 3px solid var(--border-strong); }
+.prog-row { padding: 3px 0 3px 5px; border-radius: 10px; background: var(--surface-2); border: 1.5px solid transparent; }
+.prog-row.op-x { background: transparent; border: 1.5px dashed var(--border-strong); }
+.prog-row.now { border: 1.5px solid var(--pos); background: color-mix(in srgb, var(--pos) 12%, var(--surface)); }
+.prog-line { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 4px; }
+.prog-line .glyph, .prog-add .glyph { width: 14px; flex: none; text-align: center; font-weight: 800; }
+.prog-name { flex: 1 0 auto; font-size: 13px; font-weight: 600; line-height: 1.15; white-space: nowrap; }
+.prog-line .stepper { gap: 1px; flex: none; }
+.prog-line .stepper input.num { width: 40px; height: 30px; font-size: 13px; }
+.prog-line .icon-btn.small { width: 24px; height: 30px; }
+.prog-unit { flex: none; min-width: 1.9em; font-size: 12px; color: var(--ink-2); }
+.prog-actions { display: inline-flex; flex: none; margin-left: auto; }
+.prog-actions .up svg { transform: rotate(-90deg); }
+.prog-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 2px 0; }
+.prog-add .chip-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; min-height: 30px; }
+.prog-add .chip-btn .glyph { width: auto; }
+
+/* ---- the manual of the robot on its own: over the page, one screen, no scrolling, light like a poster whatever the theme ------------ */
+.manual-back { position: fixed; inset: 0; z-index: 90; background: #f4f3ef; color: #0b0b0b; color-scheme: light; overflow: hidden; }
+.manual {
+  box-sizing: border-box; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px;
+  padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+.manual header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.manual h2 { margin: 0; font-size: clamp(20px, 4.2vmin, 42px); font-weight: 800; line-height: 1.1; }
+.manual-close { flex: none; width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 2px solid #c9c7bd; color: #0b0b0b; display: grid; place-items: center; cursor: pointer; }
+.manual-grid { min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-aspect-ratio: 4 / 5) { .manual-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 8px; } }
+.m-card { min-height: 0; background: #fff; border: 2px solid #dddbd2; border-radius: 18px; padding: 6px 10px 8px; display: flex; flex-direction: column; }
+.m-card h3 { margin: 0; flex: none; font-size: clamp(14px, 2.8vmin, 28px); font-weight: 800; line-height: 1.2; }
+.m-art { flex: 1; min-height: 0; }
+.m-art > svg { width: 100%; height: 100%; display: block; }
+.m-art text { font-family: inherit; }
+/* (the robot of the drawings keeps its light colours in the dark theme too) */
+.manual .m-robot { --robot-fill: #e4e9f1; --robot-line: #8896ae; --paper: #fffefb; --pen: #17181f; }
+@media (max-height: 480px) { .manual { gap: 6px; padding-top: 6px; padding-bottom: 6px; } .manual-close { width: 34px; height: 34px; } .manual h2 { font-size: 18px; } .m-card { border-radius: 12px; padding: 3px 8px 4px; } }
+@media (max-width: 420px) {
+  .picker-groups button { min-width: 0; padding: 5px 3px; font-size: 12.5px; }
+}
