@@ -21,7 +21,7 @@ import { APP_LINKS, applyConfig, decodeConfig, encodeConfig } from './share.js';
 import { cleanName, formatWhen, randomName } from './names.js';
 import { stepSelection, otherGroupFirst, CUSTOM_ID, CUSTOM_PRESETS, clampSize, clampRepeat, clampEndAngle } from './spec.js';
 import { figureFor, customMessage } from './geometry.js';
-import { PROGRAM_PRESETS, addNode, setValue, removeNode, moveNode, cleanProgram, activeKeys } from './program.js';
+import { addNode, setValue, removeNode, moveNode, cleanProgram, activeKeys } from './program.js';
 
 const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch { return fallback; } };
 const save = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private mode */ } };
@@ -247,7 +247,6 @@ export default function App() {
       remove: (path) => change((p) => removeNode(p, path)),
       move: (path, delta) => change((p) => moveNode(p, path, delta)),
       clear: () => change(() => []),
-      preset: (name) => { if (tele.current.s.state === 'idle') tele.current.programPreset(PROGRAM_PRESETS[name]); },
     };
   }, []);
   const stop = useCallback(() => send({ command: CMD.STOP }), [send]);

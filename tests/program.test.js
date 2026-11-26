@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  LIMITS, MAX_DEPTH, MAX_NODES, PROGRAM_PRESETS, addNode, setValue, removeNode, moveNode, cleanProgram, countNodes, compileProgram, programFigure, activeKeys, programText, parseProgram,
+  LIMITS, MAX_DEPTH, MAX_NODES, addNode, setValue, removeNode, moveNode, cleanProgram, countNodes, compileProgram, programFigure, activeKeys, programText, parseProgram,
 } from '../src/program.js';
 import { CUSTOM_ID, CUSTOM_MAX_STEPS } from '../src/spec.js';
 import { figurePath, closure, customMessage, figureFor, totalTurn } from '../src/geometry.js';
@@ -14,6 +14,14 @@ const r = (v) => ({ op: 'r', v });
 const x = (v, ...body) => ({ op: 'x', v, body });
 const near = (a, b, eps, msg) => assert.ok(Math.abs(a - b) <= eps, `${msg || ''} ${a} vs ${b}`);
 const plain = (steps) => steps.map((s) => [s.len, s.turn]);
+// programs a pupil may write, used as examples here
+const SHAPES = {
+  square: [x(4, f(40), l(90))],
+  triangle: [x(3, f(50), l(120))],
+  star: [x(5, f(60), r(144))],
+  stairs: [x(4, f(20), l(90), f(20), r(90))],
+  rosette: [x(8, x(4, f(30), l(90)), l(45))],
+};
 
 test('a program is edited by the paths of its instructions, without changing the one before', () => {
   const a = [];
@@ -68,7 +76,7 @@ test('a loop around everything is counted by the robot: its body, that many time
   assert.equal(many.error, '');
   assert.equal(many.repeat, 36);
   assert.equal(many.steps.length, 1, 'thirty-six sides, told as one');
-  const rose = compileProgram(PROGRAM_PRESETS.rosette);
+  const rose = compileProgram(SHAPES.rosette);
   assert.equal(rose.repeat, 8);
   assert.deepEqual(plain(rose.steps), [[30, 90], [30, 90], [30, 90], [30, 135]], 'the turn of the square and the turn of the rosette are one');
 });
@@ -91,22 +99,22 @@ test('any other program is written out in full, once; too long, empty or drawing
 });
 
 test('the figure of a program is the page\'s own figure for the robot, and draws the shapes it says', () => {
-  const sq = programFigure(PROGRAM_PRESETS.square);
+  const sq = programFigure(SHAPES.square);
   assert.equal(sq.id, CUSTOM_ID);
   assert.equal(sq.program, true);
   assert.equal(sq.repeat, 4);
   assert.ok(closure(sq).closes);
   assert.equal(totalTurn(sq), 360);
-  const star = programFigure(PROGRAM_PRESETS.star);
+  const star = programFigure(SHAPES.star);
   assert.ok(closure(star).closes, JSON.stringify(closure(star)));
   assert.equal(totalTurn(star), -720);
-  for (const [name, program] of Object.entries(PROGRAM_PRESETS)) {
+  for (const [name, program] of Object.entries(SHAPES)) {
     const fig = programFigure(program);
     assert.equal(fig.error, '', name);
     assert.ok(fig.steps.length <= CUSTOM_MAX_STEPS, name);
     assert.deepEqual(cleanProgram(program), program, `${name} is within the limits`);
   }
-  assert.ok(closure(programFigure(PROGRAM_PRESETS.rosette)).closes);
+  assert.ok(closure(programFigure(SHAPES.rosette)).closes);
   const p = figurePath(programFigure([f(40), l(90), f(20)])).points;
   near(p.at(-1)[0], -20, 1e-9);
   near(p.at(-1)[1], 40, 1e-9);
@@ -132,7 +140,7 @@ test('the instructions the robot is on, in a side and in a turn', () => {
 });
 
 test('a program is written as a short text and read back strictly', () => {
-  for (const program of [...Object.values(PROGRAM_PRESETS), [], [f(300), x(50, x(1, x(2)), r(1))]]) assert.deepEqual(parseProgram(programText(program)), program);
-  assert.equal(programText(PROGRAM_PRESETS.rosette), '8(4(f30l90)l45)');
+  for (const program of [...Object.values(SHAPES), [], [f(300), x(50, x(1, x(2)), r(1))]]) assert.deepEqual(parseProgram(programText(program)), program);
+  assert.equal(programText(SHAPES.rosette), '8(4(f30l90)l45)');
   for (const bad of ['f', 'f0', 'f301', 'l361', 'q10', '4(f10', 'f10)', '4f10', '0(f10)', '51(f10)', '2(2(2(2(f10))))', 'f10 l90', 'f1000', 'f10'.repeat(MAX_NODES + 1), '(f10)', null, 7]) assert.equal(parseProgram(bad), null, String(bad));
 });

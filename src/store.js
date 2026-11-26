@@ -115,13 +115,6 @@ export class Telemetry {
     this.publish();
   }
 
-  // A ready-made program. As for the ready-made forms of points: the robot stays where it is, except on a blank sheet it was not put on.
-  programPreset(program) {
-    this.s.program = cleanProgram(program);
-    this.autoPlace();
-    this.publish();
-  }
-
   // The figure on the screen: one of the sixteen, or the page's own form.
   figureNow() { return figureFor(this.s); }
 

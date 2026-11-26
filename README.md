@@ -85,7 +85,7 @@ Le quatrième onglet de « Choisis une figure » (`src/program.js`, `src/compone
 
 - Quatre instructions: **Avance** (1 à 300 mm), **Gauche** et **Droite** (1 à 360°, sur place), **Répète** (1 à 50 fois), qui contient sa propre liste; jusqu'à **trois boucles l'une dans l'autre** et **40 instructions**. Sous chaque
   liste, les boutons qui ajoutent une instruction à sa fin; chaque ligne a son nombre (− / + ou au clavier), « monter » et « enlever ». Pas de « reculer » (le robot dessine en avançant).
-- Cinq modèles: carré, triangle, étoile, escalier, rosace (`8 × [4 × (avance 30, gauche 90), gauche 45]`).
+- **Pas de modèles**: l'onglet ne montre que « Mon programme », vide au départ; l'élève écrit tout lui-même, avec des lignes (« Avance »), des angles (« Gauche », « Droite ») et des boucles (« Répète »). Exemple: `8 × [4 × (avance 30, gauche 90), gauche 45]` fait une rosace.
 - Le **pointillé** montre ce que le programme dessinera, depuis la place du robot (le robot se tire et se tourne comme pour les figures du firmware; écrire le programme ne le déplace pas). La **recette** donne les côtés tels que le robot les
   fera, et **l'instruction en cours s'allume** dans le programme pendant le dessin.
 - **Pour le robot, c'est la forme libre** (figure 16): les instructions deviennent la liste de ses côtés et virages (`compileProgram`), dite par les mêmes messages: rien de nouveau dans le mode MicroPython. Deux « avance » de suite font un seul

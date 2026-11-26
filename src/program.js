@@ -133,19 +133,6 @@ export function activeKeys(figure, step, phase) {
   return phase === 't' || s.len === 0 ? s.turnFrom : s.from;
 }
 
-// ---- a few programs to start from -----------------------------------------------------------------------------------------------
-const f = (v) => ({ op: 'f', v });
-const l = (v) => ({ op: 'l', v });
-const r = (v) => ({ op: 'r', v });
-const x = (v, ...body) => ({ op: 'x', v, body });
-export const PROGRAM_PRESETS = {
-  square: [x(4, f(40), l(90))],
-  triangle: [x(3, f(50), l(120))],
-  star: [x(5, f(60), r(144))],
-  stairs: [x(4, f(20), l(90), f(20), r(90))],
-  rosette: [x(8, x(4, f(30), l(90)), l(45))],
-};
-
 // ---- the program as a short text, for the QR code: f40 l90 r144, and a loop 4(...) -------------------------------------------------
 export const programText = (list) => list.map((n) => (n.op === 'x' ? `${n.v}(${programText(n.body)})` : `${n.op}${n.v}`)).join('');
 

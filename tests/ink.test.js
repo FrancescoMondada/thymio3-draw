@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { Telemetry } from '../src/store.js';
 import { SimBackend } from '../src/sim/sim-backend.js';
 import { figurePath, customMessage, figureOf } from '../src/geometry.js';
-import { PROGRAM_PRESETS, programFigure } from '../src/program.js';
+import { programFigure } from '../src/program.js';
 import { mmPerUnit, CUSTOM_ID } from '../src/spec.js';
 import { CMD } from '../src/protocol.js';
 
@@ -71,7 +71,14 @@ for (const [name, pose, pts, times, angle] of [...CASES.map((c) => [...c, 1, 0])
   });
 }
 
-for (const [name, program] of Object.entries(PROGRAM_PRESETS)) {
+const turtle = {
+  'a square': [{ op: 'x', v: 4, body: [{ op: 'f', v: 40 }, { op: 'l', v: 90 }] }],
+  'a five-pointed star': [{ op: 'x', v: 5, body: [{ op: 'f', v: 60 }, { op: 'r', v: 144 }] }],
+  'stairs': [{ op: 'x', v: 4, body: [{ op: 'f', v: 20 }, { op: 'l', v: 90 }, { op: 'f', v: 20 }, { op: 'r', v: 90 }] }],
+  'a rosette of squares, a loop in a loop': [{ op: 'x', v: 8, body: [{ op: 'x', v: 4, body: [{ op: 'f', v: 30 }, { op: 'l', v: 90 }] }, { op: 'l', v: 45 }] }],
+  'a turn first, then lines and angles with no loop': [{ op: 'r', v: 45 }, { op: 'f', v: 30 }, { op: 'l', v: 60 }, { op: 'f', v: 20 }],
+};
+for (const [name, program] of Object.entries(turtle)) {
   test(`a geometric program is drawn on the line it plans, by the virtual robot: ${name}`, async () => {
     const tele = new Telemetry(CUSTOM_ID, { program, mine: 'program' });
     const sim = new SimBackend((e) => tele.push(e), { speed: 10 });

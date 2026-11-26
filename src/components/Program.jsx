@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { LIMITS, OPS, MAX_DEPTH, MAX_NODES, PROGRAM_PRESETS, countNodes, pathKey } from '../program.js';
+import { LIMITS, OPS, MAX_DEPTH, MAX_NODES, countNodes, pathKey } from '../program.js';
 import { CUSTOM_MAX_STEPS } from '../spec.js';
 import { fmt } from '../i18n.js';
 import { num } from '../util.js';
 import { ChevronIcon, CloseIcon, EraserIcon, MinusIcon, PlusIcon } from '../icons.jsx';
 
-// The "Géométrie" tab: the form written as a program. A list of instructions (forward, left, right, repeat, with its own list inside), each
+// The "Géométrie" tab: the pupil's own program, written from nothing (no ready-made shapes). A list of instructions (forward, left, right, repeat, with its own list inside), each
 // with its number, that can be moved up or taken away; under each list, the buttons that add one at its end. While the robot draws, the
 // instruction it is on is lit.
 const GLYPH = { f: '↑', l: '↺', r: '↻', x: '×' };
@@ -18,12 +18,7 @@ export default function Program({ t, program, figure, onProgram, active, disable
   return (
     <div className="program">
       <p className="muted small">{g.hint}</p>
-      <div className="extra-label">{g.presets}</div>
-      <div className="chips">
-        {Object.keys(PROGRAM_PRESETS).map((k) => (
-          <button key={k} type="button" className="chip-btn" disabled={disabled} onClick={() => onProgram.preset(k)}>{g.names[k]}</button>
-        ))}
-      </div>
+      <h3>{t.figures.geometry}</h3>
       <List {...shared} list={program} path={[]} />
       <div className="btn-row tight">
         <button type="button" className="btn small" disabled={disabled || !program.length} onClick={onProgram.clear}><EraserIcon size={15} />{g.clear}</button>
